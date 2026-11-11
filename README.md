@@ -4,7 +4,7 @@ Agente de IA para el postventa de una agencia automotriz ficticia en Colombia (p
 
 ## Enlaces
 
-- Demo: (se publica al desplegar)
+- Demo: https://postventa-agentica.vercel.app
 - Repo: https://github.com/JaimeUDistrital/postventa-agentica
 - Resumen ejecutivo (PDF): [entregables/RESUMEN_EJECUTIVO_COMITE.pdf](entregables/RESUMEN_EJECUTIVO_COMITE.pdf)
 - Modelo financiero (Excel): [entregables/MODELO_FINANCIERO_POSTVENTA_3Y.xlsx](entregables/MODELO_FINANCIERO_POSTVENTA_3Y.xlsx)

@@ -1,8 +1,8 @@
 # ESTADO GLOBAL · Postventa Agéntica
 > Solo el Orquestador escribe aquí (≤ 40 líneas). Para retomar: este archivo + `PLAN.md` §15.
-**Actualizado:** 2026-11-11 17:35 -05 · **Fase:** Ola 3 (rama `ola-2-entrega`; `main` = hasta T08) · **Entrega:** 23:00
-**Siguiente acción:** recibir T19 (rediseño) y T14 → revisión visual en Chrome → merge a `main` → push → Vercel → T15–T17.
-**Usuario:** borrar y recrear el repo · clave Gemini SIN facturación · SESSION_SECRET y DEMO_ACCESS_CODE en su terminal · Vercel sin clave de Gemini hasta el merge de T18.
+**Actualizado:** 2026-11-11 17:45 -05 · **Fase:** Ola 3 (rama `ola-2-entrega`; `main` local = hasta T19 + URL; GitHub = T14) · **Entrega:** 23:00
+**Siguiente acción:** OK del usuario para push de `main` → Vercel redespliega → revisión visual + T16 en la URL → T15 → T17 (zip) + GIF.
+**Usuario:** repo recreado ✅ · Vercel desplegado ✅ (https://postventa-agentica.vercel.app, 4 variables importadas de su archivo local de entorno, ignorado por git) · pendiente: E2E y evals con Gemini en su terminal.
 **Caso de negocio (v1.1):** base VPN −49.816 USD, sin payback en 36 m; equilibrio operativo 18,4 vs 20,9 citas/mes; payback 24 m ≈ 2,2 sedes. Optimista payback 4 m.
 Estados: ⬜ PENDIENTE · 🔄 EN_CURSO · ✅ HECHA · ⚠️ ESCALADA · ⛔ BLOQUEADA · Int. = intentos fallidos (máx. 2)
 
@@ -22,16 +22,16 @@ Estados: ⬜ PENDIENTE · 🔄 EN_CURSO · ✅ HECHA · ⚠️ ESCALADA · ⛔ B
 | T11 | Arquitectura + ADR 0001-0005 | MEDIO · sonnet | ✅ | 0 | check_mermaid 8/8 | 4e86d66 · render en GitHub |
 | T12 | Integración UI↔API + guion | MEDIO · sonnet | ✅ | 0 | vitest UI 39/39 | 1272dbc |
 | T13 | Resumen ejecutivo PDF | MEDIO · sonnet | ✅ | 0 | Pages 2 · check_pdf OK | 1779922 · falta URL |
-| T14 | README, GLOSSARY, .env.example, IA | MEDIO · sonnet · low | 🔄 | 0 | scripts existen | |
+| T14 | README, GLOSSARY, ejemplo de variables, IA | MEDIO · sonnet · low | ✅ | 0 | scripts existen | 341683a |
 | T18 | Protección demo (código jurado, topes) | MEDIO · sonnet | ✅ | 0 | vitest 268/268 | 729c210 · ADR 0006 |
-| T19 | Rediseño «Consola del asesor» | ALTO · opus · high | 🔄 | 0 | vitest UI + humo | pedido del usuario |
+| T19 | Rediseño «Consola del asesor» | ALTO · opus · high | ✅ | 0 | UI 47/47 · suite 329 (+3 omit.) · tsc 0 | 32e5f79 · 897ca67 |
 | T15 | Revisión + coherencia | ALTO · opus · high | ⬜ | 0 | check_coherence + §11 | |
 | T16 | Verificación en vivo | MEDIO · sonnet | ⬜ | 0 | 5/5 en URL | |
 | T17 | Paquete final | BAJO · haiku | ⬜ | 0 | unzip -l | |
 
 ## Checkpoints y entregables
 - [x] CP1 · [ ] CP2 (merge + push) · [ ] CP3 · [ ] Batería §11
-- [ ] URL · [ ] Repo recreado · [x] PDF 2 págs · [x] XLSX · [x] Arquitectura + ADR 0006 · [x] Evals · [ ] ZIP
+- [x] URL · [x] Repo recreado · [x] PDF 2 págs · [x] XLSX · [x] Arquitectura + ADR 0006 · [x] Evals · [ ] ZIP
 
 ## Último error / escalado
 - Sandbox: sin Chrome, sin sudo, red aislada, `.git/config` de solo lectura → jsdom, WeasyPrint, `formulas`, `git -c user.email`. E2E real, evals con Gemini y recálculo del Excel los corre el usuario.
