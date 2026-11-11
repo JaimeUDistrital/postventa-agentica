@@ -9,6 +9,8 @@ test("las 3 zonas cargan y un escenario genera traza sin errores de consola", as
 
   await page.goto("/");
   await expect(page.getByTestId("owner-chat")).toBeVisible();
+  // El detalle técnico está plegado en <details> (T19): se abre antes de comprobarlo.
+  await page.getByText("Ver detalle técnico (para el jurado)").click();
   await expect(page.getByTestId("xray-console")).toBeVisible();
   await expect(page.getByTestId("advisor-inbox")).toBeVisible();
 

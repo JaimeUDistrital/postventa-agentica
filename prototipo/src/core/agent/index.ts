@@ -68,7 +68,7 @@ export async function runTurnConEntorno(
 
 /** Sin planner ni herramientas: el agente determinista no se invoca con mensaje; solo se reutiliza su envoltorio de turno. */
 async function turnoBloqueadoPorTope(request: AgentRequest, secret: string): Promise<AgentTurn> {
-  const texto = `La demo alcanzó el límite de ${LIMITES_DEMO.maxTurnosSesion} turnos. Use "Reiniciar demo".`;
+  const texto = `La demo alcanzó el límite de ${LIMITES_DEMO.maxTurnosSesion} turnos. Use el botón «Reiniciar».`;
   const sinLlamadas: Planner = {
     mode: "deterministic",
     next: async ({ session }) => ({ step: { kind: "final", text: texto, nextState: session.state, showCards: [] } }),

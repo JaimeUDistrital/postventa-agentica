@@ -122,7 +122,7 @@ describe("runTurnConEntorno · tope de turnos por sesión", () => {
     expect(client.llamadas()).toBe(0);
     expect(t.trace.filter((e) => e.kind === "tool_call" || e.kind === "tool_result")).toEqual([]);
     expect(t.reply.text).toContain("límite de 20 turnos");
-    expect(t.reply.text).toContain("Reiniciar demo");
+    expect(t.reply.text).toContain("«Reiniciar»");
     expect(t.reply.cards).toEqual([{ type: "bloqueo", motivo: t.reply.text }]);
     expect(t.state).toBe("COTIZACION");
     expect(t.trace.some((e) => e.kind === "policy" && e.name === "limite_turnos" && e.status === "blocked")).toBe(true);
