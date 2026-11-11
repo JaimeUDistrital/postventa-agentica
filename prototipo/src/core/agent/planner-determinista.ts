@@ -4,10 +4,17 @@
  * deciden en el orquestador. Nunca escribe precios ni reservas (usa `showCards`).
  */
 import { createHash } from "node:crypto";
-import { AgendarBahiaOutput, ConsultarContextoOutput, type ToolName, type ToolResult } from "@/core/contracts";
+import {
+  AgendarBahiaOutput,
+  ConsultarContextoOutput,
+  CotizarSegurosOutput,
+  type InsuranceOffer,
+  type ToolName,
+  type ToolResult,
+} from "@/core/contracts";
 import type { CardKind, Planner, PlannerInput, PlannerResult, PlannerStep } from "@/core/ports";
 import { encodeQuoteId, parseQuoteId, type QuoteParams } from "@/core/tools";
-import { detectarIntencion, extraVentaCruzada, type Intencion } from "./intencion";
+import { detectarIntencion, extraVentaCruzada, normalizar, type Intencion } from "./intencion";
 import { evento } from "./trace";
 
 /** Hasta 60k devuelve el hito exacto (el tarifario los cubre). Por encima, cicla 4 hitos (70k → 30k…). */
@@ -52,6 +59,71 @@ function paramsBase(input: PlannerInput): QuoteParams | null {
 }
 
 const SIN_PERMISO = "Su caso ya está en manos de un asesor humano, que le contactará en breve.";
+/** T21: el menú ofrece siempre la salida a una persona; si se repite, el caso pasa a un humano. */
+const MENU =
+  "Puedo ayudarle a agendar, agregar el paquete de desgaste o ver seguros. ¿Qué prefiere? Si lo desea, escriba «asesor» y le atiende una persona.";
+const TEXTO_SEGUROS = "Estas son las opciones de nuestras aseguradoras aliadas. Usted decide si le interesa alguna.";
+
+const ultimoTextoAgente = (input: PlannerInput): string | undefined =>
+  input.session.historial.filter((h) => h.rol === "agente").at(-1)?.texto;
+const segurosMostrados = (input: PlannerInput): boolean =>
+  input.session.historial.some((h) => h.rol === "agente" && h.texto.startsWith(TEXTO_SEGUROS));
+
+/** La 2.ª vez seguida que el agente no entiende, pasa el caso a un humano (no hay bucles). */
+const noResuelto = (input: PlannerInput): PlannerStep =>
+  final(input, "No logré entender su solicitud. Un asesor humano revisará su conversación y le contactará en breve.", [], "HANDOFF", {
+    motivo: "no_resuelto",
+    prioridad: "media",
+    resumen: "El agente no entendió dos mensajes seguidos del cliente",
+  });
+
+/** Con la cita confirmada: no se vuelve a cotizar ni a agendar; los cambios los gestiona una persona. */
+function citaCerrada(input: PlannerInput): PlannerStep {
+  if (/(cambi|reprogram|mover|cancel|aplaz|otra fecha|otro dia|otra hora)/.test(normalizar(input.maskedMessage)))
+    return final(input, "Para cambiar o cancelar su cita le atiende un asesor humano, que le contactará en breve.", [], "HANDOFF", {
+      motivo: "no_resuelto",
+      prioridad: "media",
+      resumen: "El cliente quiere cambiar o cancelar su cita confirmada",
+    });
+  return final(
+    input,
+    "Su cita ya está confirmada. Si necesita cambiarla, escriba «cambiar cita»; si prefiere hablar con una persona, escriba «asesor».",
+    [],
+    "CERRADO",
+  );
+}
+
+/** Opción de seguro elegida por número, ordinal o nombre; null si el mensaje no elige ninguna. */
+function eleccionSeguro(texto: string): number | string | null {
+  const t = normalizar(texto);
+  const num = /\b(?:opcion|numero|el|la|plan)\s*(?:n[o°º.]?\s*)?([123])\b|^\s*([123])\s*$/.exec(t);
+  if (num) return Number(num[1] ?? num[2]);
+  const ord = /\b(?:la|el|opcion)\s+(primer|segund|tercer)[oa]?\b(?!\s+vez)/.exec(t);
+  if (ord) return ["primer", "segund", "tercer"].indexOf(ord[1]) + 1;
+  const producto = /\b(soat|todo riesgo|responsabilidad civil)\b/.exec(t);
+  return producto && /\b(quiero|elijo|tomo|me interesa|prefiero)\b/.test(t) ? producto[1] : null;
+}
+
+function elegirSeguro(input: PlannerInput, eleccion: number | string): PlannerStep {
+  const r = ultimo(input.toolResults, "cotizar_aliados_seguros");
+  if (!r) {
+    if (!input.allowedTools.includes("cotizar_aliados_seguros")) return final(input, SIN_PERMISO, []);
+    return llamada("cotizar_aliados_seguros", { vehicleId: input.session.vehicleId }, "El cliente eligió una oferta de seguro");
+  }
+  const out = r.ok ? CotizarSegurosOutput.safeParse(r.output) : undefined;
+  const ofertas: InsuranceOffer[] = out?.success ? out.data.ofertas : [];
+  const o =
+    typeof eleccion === "number" ? ofertas[eleccion - 1] : ofertas.find((x) => normalizar(x.producto) === eleccion);
+  if (!o) return final(input, "No identifiqué la opción que eligió. Escriba su número, por ejemplo «la 1».", []);
+  // El texto no lleva precios (los muestran las tarjetas verificadas); el resumen interno sí, para el asesor.
+  return final(
+    input,
+    `Excelente elección: ${o.producto} de ${o.aseguradora}. Para emitir la póliza, un asesor certificado le contactará para validar sus datos. Mientras tanto, ¿le agendo su mantenimiento?`,
+    [],
+    input.session.state,
+    { motivo: "seguro", prioridad: "media", resumen: `Eligió ${o.producto} de ${o.aseguradora} (prima anual USD ${o.primaAnualUsd})` },
+  );
+}
 
 /** Pide contexto si falta; si ya se pidió y no llegó, cierra con un texto seguro. */
 function necesitaContexto(input: PlannerInput): PlannerStep {
@@ -120,22 +192,30 @@ function seguros(input: PlannerInput): PlannerStep {
     if (!input.allowedTools.includes("cotizar_aliados_seguros")) return final(input, SIN_PERMISO, []);
     return llamada("cotizar_aliados_seguros", { vehicleId: input.session.vehicleId }, "El cliente pregunta por seguros");
   }
-  return final(input, "Estas son las opciones de nuestras aseguradoras aliadas. Usted decide si le interesa alguna.", r.ok ? ["seguro"] : []);
+  return final(input, TEXTO_SEGUROS, r.ok ? ["seguro"] : []);
 }
 
 export function planificar(input: PlannerInput): PlannerStep {
   const intencion = detectarIntencion(input.request, input.maskedMessage);
+  // T21: con el caso en manos de un humano, el agente no ofrece nada más.
+  if (input.session.state === "HANDOFF") return final(input, SIN_PERMISO, []);
   if (intencion === "asesor")
     return final(input, "Con gusto. Un asesor humano revisará su caso y le contactará en breve.", [], "HANDOFF", {
       motivo: "cliente_molesto",
       prioridad: "media",
       resumen: "El cliente pide hablar con un asesor",
     });
-  if (intencion === "seguros") return seguros(input);
+  const eleccion = segurosMostrados(input) ? eleccionSeguro(input.maskedMessage) : null;
+  if (eleccion !== null) return elegirSeguro(input, eleccion);
+  if (intencion === "seguros")
+    return segurosMostrados(input)
+      ? final(input, "Ya le compartí las opciones de nuestras aseguradoras aliadas más arriba. Para elegir una, escriba su número, por ejemplo «la 1».", [])
+      : seguros(input);
+  if (input.session.state === "CERRADO") return citaCerrada(input);
 
   const base = paramsBase(input);
   if (intencion === "otro" && input.session.quoteId)
-    return final(input, "Puedo ayudarle a agendar, agregar el paquete de desgaste o ver seguros. ¿Qué prefiere?", []);
+    return ultimoTextoAgente(input) === MENU ? noResuelto(input) : final(input, MENU, []);
   if (!base) return necesitaContexto(input);
 
   switch (intencion) {

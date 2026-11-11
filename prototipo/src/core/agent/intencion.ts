@@ -23,7 +23,11 @@ const POR_ACCION: Record<UserAction, Intencion> = {
 
 /** Orden = prioridad: la primera regla que coincide gana. */
 const REGLAS: readonly [Intencion, RegExp][] = [
-  ["asesor", /\b(asesor|humano|una persona|molest|queja|enojad|furios)/],
+  // T21: solo pedidos explícitos de llamada («¿me pueden llamar?»); «llámeme si hay novedades» no es un pase a humano (eval P03).
+  [
+    "asesor",
+    /\b(asesor|humano|una persona|molest|queja|enojad|furios)|\b(?:pueden|puede|podrian|podria)\s+(?:me\s+)?(?:llamar|contactar)\b|\b(?:quiero|necesito)\s+que\s+me\s+(?:llamen|contacten|llame|contacte)\b/,
+  ],
   ["confirmar", /\bconfirm/],
   ["rechazar_venta_cruzada", /\bno (gracias|quiero|me interesa)\b|\bsin (el )?paquete\b/],
   ["venta_cruzada", /(freno|pastilla|bateria|llanta|alineac|balanceo|agregue|agrega|anad)/],

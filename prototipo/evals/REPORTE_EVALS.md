@@ -1,6 +1,6 @@
 # Reporte de evals del agente de postventa
 
-- **Fecha:** 2026-11-11T22:13:05.787Z
+- **Fecha:** 2026-11-11T23:38:22.240Z
 - **Modo:** determinista (planner `plannerDeterminista`, puertos mock) · modo LLM: ejecutado
 - **Población:** 32 casos, 70 turnos; ninguna ejecución descartada (los casos con excepción cuentan como fallo).
 - **Comando:** `npm run evals` (desde `prototipo/`)

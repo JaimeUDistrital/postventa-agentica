@@ -335,7 +335,8 @@ export function createAgent(deps: AgentDeps): Agent {
         ultimoMensaje: v.maskedInput,
         nota: final.handoff.resumen,
       });
-    const state = estadoSeguro(final.nextState, s, { reserva: !!t.booking, confirmada, caso: !!caso });
+    // T21: el caso de venta de seguro lo atiende un asesor, pero no bloquea la conversación (puede seguir agendando).
+    const state = estadoSeguro(final.nextState, s, { reserva: !!t.booking, confirmada, caso: !!caso && caso.motivo !== "seguro" });
     return {
       ...vacio(s),
       state,
