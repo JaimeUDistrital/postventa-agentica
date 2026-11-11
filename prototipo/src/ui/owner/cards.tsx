@@ -1,0 +1,178 @@
+"use client";
+import { CalendarCheck, Gauge, Headset, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
+import type { ReactNode } from "react";
+import type { ReplyCard, UserAction } from "@/core/contracts";
+import { formatCop, formatFechaHora, formatKm, formatUsd } from "./format";
+
+interface Props {
+  card: ReplyCard;
+  act: (accion: UserAction) => void;
+  disabled?: boolean;
+}
+
+const base = "w-full rounded-2xl border bg-white p-3.5 text-sm shadow-sm";
+const btnPrimario =
+  "inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60";
+const btnSecundario =
+  "inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-brand/40 bg-white px-4 text-sm font-semibold text-brand hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-60";
+
+function Titulo({ icono, children }: { icono: ReactNode; children: ReactNode }) {
+  return (
+    <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
+      <span aria-hidden className="text-brand">
+        {icono}
+      </span>
+      {children}
+    </h3>
+  );
+}
+
+export function ReplyCardView({ card, act, disabled }: Props) {
+  switch (card.type) {
+    case "alerta_km":
+      return (
+        <article aria-label="Alerta de kilometraje" data-testid="card-alerta_km" className="w-full rounded-2xl border border-amber-300 bg-amber-50 p-3.5 text-sm text-amber-950 shadow-sm">
+          <h3 className="mb-2 flex items-center gap-2 font-semibold">
+            <Gauge aria-hidden className="size-4" />
+            Su vehículo se acerca al mantenimiento
+          </h3>
+          <dl className="grid grid-cols-3 gap-2 text-center">
+            <Dato etiqueta="Km estimado" valor={formatKm(card.kmEstimado)} />
+            <Dato etiqueta="Próximo hito" valor={formatKm(card.proximoHitoKm)} />
+            <Dato etiqueta="Días restantes" valor={`${card.diasParaHito}`} />
+          </dl>
+        </article>
+      );
+    case "cotizacion": {
+      const q = card.quote;
+      return (
+        <article aria-label="Cotización" data-testid="card-cotizacion" className={base + " border-slate-200"}>
+          <Titulo icono={<Clock className="size-4" />}>Cotización de {formatKm(q.hitoKm)}</Titulo>
+          <ul className="divide-y divide-slate-100">
+            {q.items.map((l, i) => (
+              <li key={`${l.sku ?? l.concepto}-${i}`} className="flex justify-between gap-3 py-1.5">
+                <span className="text-slate-700">
+                  {l.concepto}
+                  {l.cantidad > 1 && <span className="text-slate-500"> × {l.cantidad}</span>}
+                </span>
+                <span className="shrink-0 tabular-nums text-slate-900">{formatCop(l.totalUsd)}</span>
+              </li>
+            ))}
+          </ul>
+          <dl className="mt-2 space-y-1 border-t border-slate-200 pt-2">
+            <Fila etiqueta="Subtotal" valor={formatCop(q.subtotalUsd)} />
+            {q.descuentoPct > 0 && (
+              <Fila etiqueta={`Descuento (${Math.round(q.descuentoPct * 100)} %)`} valor={`− ${formatCop(q.subtotalUsd - q.totalUsd)}`} />
+            )}
+            <div className="flex items-baseline justify-between pt-1">
+              <dt className="font-semibold text-slate-900">Total</dt>
+              <dd className="text-right">
+                <span data-testid="cotizacion-total" className="text-lg font-bold tabular-nums text-brand">
+                  {formatCop(q.totalUsd)}
+                </span>
+                <span className="block text-xs text-slate-600">{formatUsd(q.totalUsd)} USD</span>
+              </dd>
+            </div>
+          </dl>
+          <div className="mt-3 grid gap-2">
+            <button type="button" disabled={disabled} onClick={() => act("aceptar_mantenimiento")} className={btnPrimario}>
+              Agendar
+            </button>
+            <button type="button" disabled={disabled} onClick={() => act("agregar_venta_cruzada")} className={btnSecundario}>
+              Agregar paquete de desgaste
+            </button>
+          </div>
+        </article>
+      );
+    }
+    case "reserva": {
+      const b = card.booking;
+      const confirmada = b.estado === "confirmada";
+      return (
+        <article aria-label="Reserva" data-testid="card-reserva" className={base + " border-slate-200"}>
+          <Titulo icono={<CalendarCheck className="size-4" />}>{confirmada ? "Reserva confirmada" : "Reserva pendiente de confirmar"}</Titulo>
+          <p className="font-medium text-slate-900 first-letter:uppercase">{formatFechaHora(b.inicio)}</p>
+          <p className="text-slate-600">Bahía {b.bahia} · Referencia {b.id}</p>
+          {!confirmada && (
+            <>
+              <p className="mt-1 text-xs text-slate-600">Apartamos su cupo hasta {formatFechaHora(b.holdHasta)}.</p>
+              <button type="button" disabled={disabled} onClick={() => act("confirmar_reserva")} className={btnPrimario + " mt-3"}>
+                Confirmar reserva
+              </button>
+            </>
+          )}
+        </article>
+      );
+    }
+    case "alternativas":
+      return (
+        <article aria-label="Horarios alternativos" data-testid="card-alternativas" className={base + " border-slate-200"}>
+          <Titulo icono={<CalendarCheck className="size-4" />}>Otros horarios disponibles</Titulo>
+          <p className="mb-2 text-slate-700">{card.motivo}</p>
+          <ul className="space-y-1">
+            {card.slots.map((s) => (
+              <li key={s.id} className="rounded-lg bg-slate-50 px-3 py-2 text-slate-800">
+                <span className="first-letter:uppercase">{formatFechaHora(s.inicio)}</span>
+                <span className="text-slate-500"> · Bahía {s.bahia}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+      );
+    case "seguro":
+      return (
+        <article aria-label="Seguros" data-testid="card-seguro" className={base + " border-slate-200"}>
+          <Titulo icono={<ShieldCheck className="size-4" />}>Seguros para su vehículo</Titulo>
+          <ul className="space-y-2">
+            {card.ofertas.map((o) => (
+              <li key={o.id} className="rounded-lg bg-slate-50 px-3 py-2">
+                <div className="flex justify-between gap-3">
+                  <span className="font-medium text-slate-900">
+                    {o.aseguradora} · {o.producto}
+                  </span>
+                  <span className="shrink-0 tabular-nums font-semibold text-brand">{formatCop(o.primaAnualUsd)}/año</span>
+                </div>
+                <p className="text-xs text-slate-600">{o.coberturaResumen}</p>
+              </li>
+            ))}
+          </ul>
+          <button type="button" disabled={disabled} onClick={() => act("ver_seguros")} className={btnSecundario + " mt-3"}>
+            Ver seguros
+          </button>
+        </article>
+      );
+    case "handoff":
+      return (
+        <article aria-label="Atención por un asesor" data-testid="card-handoff" className="w-full rounded-2xl border border-brand/30 bg-brand-soft p-3.5 text-sm shadow-sm">
+          <Titulo icono={<Headset className="size-4" />}>Un asesor humano tomará su caso</Titulo>
+          <p className="text-slate-800">{card.mensaje}</p>
+          <p className="mt-1 text-xs text-slate-600">Caso {card.casoId}</p>
+        </article>
+      );
+    case "bloqueo":
+      return (
+        <article aria-label="Solicitud no atendida" data-testid="card-bloqueo" className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-3.5 text-sm shadow-sm">
+          <Titulo icono={<ShieldAlert className="size-4" />}>No podemos continuar con esta solicitud</Titulo>
+          <p className="text-slate-700">{card.motivo}</p>
+        </article>
+      );
+  }
+}
+
+function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <div className="rounded-lg bg-white/70 px-1 py-1.5">
+      <dt className="text-[11px] text-amber-900">{etiqueta}</dt>
+      <dd className="font-bold tabular-nums">{valor}</dd>
+    </div>
+  );
+}
+
+function Fila({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <div className="flex justify-between text-slate-700">
+      <dt>{etiqueta}</dt>
+      <dd className="tabular-nums">{valor}</dd>
+    </div>
+  );
+}
