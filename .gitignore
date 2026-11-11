@@ -29,6 +29,9 @@ Directorio Maestro IA*.xlsx
 # Candado de E2E/build compartido entre agentes
 .e2e.lock
 
+# Bloqueos de LibreOffice
+.~lock.*
+
 # Puntos de montaje vacíos que crea el sandbox de Claude Code en la raíz
 /.bash_profile
 /.bashrc
