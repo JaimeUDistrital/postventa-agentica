@@ -1,6 +1,6 @@
 # ADR 0006 · Protección de la demo pública
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada · la capa 2 (código del jurado) pasa a ser opcional por el ADR 0007 (interruptor `GEMINI_SOLO_CON_CODIGO=1`)
 - **Fecha:** 2026-11-11
 
 ## Contexto
