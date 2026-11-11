@@ -145,6 +145,8 @@ const SIGUIENTE_PASO: Record<HandoffCase["motivo"], string> = {
   adversarial: "Revisar la conversación; no ceder a la petición y responder con la política vigente",
   garantia: "Validar cobertura de garantía con el concesionario antes de prometer nada",
   cliente_molesto: "Contactar al cliente con tono empático y ofrecer una solución concreta",
+  seguro: "Contactar al cliente, validar sus datos y emitir la póliza elegida",
+  no_resuelto: "Leer la conversación y responder lo que el agente no pudo resolver",
 };
 
 export const escalarAsesor: Handler<"escalar_asesor_humano"> = async (ctx, input) => {

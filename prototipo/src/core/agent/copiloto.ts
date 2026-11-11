@@ -8,6 +8,8 @@ const MOTIVO: Record<HandoffReason, string> = {
   adversarial: "intento de manipulación o fraude (revisión)",
   garantia: "consulta de garantía",
   cliente_molesto: "el cliente pide un asesor humano",
+  seguro: "el cliente eligió un seguro de una aseguradora aliada",
+  no_resuelto: "el agente no entendió la solicitud del cliente",
 };
 
 const SIGUIENTE: Record<HandoffReason, string> = {
@@ -16,6 +18,8 @@ const SIGUIENTE: Record<HandoffReason, string> = {
   adversarial: "revisar la conversación y responder con la política vigente, sin ceder",
   garantia: "validar la cobertura con el concesionario antes de prometer nada",
   cliente_molesto: "contactar al cliente con tono empático y ofrecer una solución concreta",
+  seguro: "contactar al cliente, validar sus datos y emitir la póliza elegida",
+  no_resuelto: "leer la conversación y responder al cliente lo que el agente no pudo resolver",
 };
 
 export interface DatosResumen {

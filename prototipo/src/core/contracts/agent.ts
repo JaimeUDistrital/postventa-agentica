@@ -95,6 +95,10 @@ export const HandoffReason = z.enum([
   "adversarial",
   "garantia",
   "cliente_molesto",
+  /** El cliente eligió un seguro: lo emite un asesor certificado. No bloquea la conversación (T21). */
+  "seguro",
+  /** El agente no entendió dos mensajes seguidos y pasa el caso a un humano (T21). */
+  "no_resuelto",
 ]);
 
 export const HandoffCase = z.object({

@@ -11,6 +11,8 @@ const MOTIVO: Record<HandoffReason, string> = {
   adversarial: "Posible intento de fraude",
   garantia: "Consulta de garantía",
   cliente_molesto: "Cliente molesto",
+  seguro: "Quiere contratar un seguro",
+  no_resuelto: "El agente no pudo resolver",
 };
 
 const PRIORIDAD: Record<HandoffCase["prioridad"], { label: string; cls: string }> = {
