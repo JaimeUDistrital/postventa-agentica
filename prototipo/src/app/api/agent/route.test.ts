@@ -72,3 +72,30 @@ describe("POST /api/agent", () => {
     expect((await post({ sessionId: "", scenarioId: "nada" })).status).toBe(400);
   });
 });
+
+describe("límite de peticiones por IP", () => {
+  const desde = (ip: string) =>
+    POST(new Request("http://localhost/api/agent", { method: "POST", headers: { "x-forwarded-for": `${ip}, 10.0.0.1` }, body: "{no json" }));
+
+  it("la petición 31 en un minuto → 429; otra IP sigue pasando; la ventana se libera", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      for (let i = 0; i < 30; i++) expect((await desde("203.0.113.7")).status).toBe(400);
+      const res = await desde("203.0.113.7");
+      expect(res.status).toBe(429);
+      expect(await res.json()).toEqual({ error: "Demasiadas solicitudes, intente en un minuto" });
+      expect((await desde("203.0.113.8")).status).toBe(400);
+      vi.advanceTimersByTime(61_000);
+      expect((await desde("203.0.113.7")).status).toBe(400);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("sin x-forwarded-for nunca hay 429, ni con 40 peticiones", async () => {
+    for (let i = 0; i < 40; i++) {
+      const res = await POST(new Request("http://localhost/api/agent", { method: "POST", body: "{no json" }));
+      expect(res.status).toBe(400);
+    }
+  });
+});
