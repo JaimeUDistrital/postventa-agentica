@@ -1,12 +1,12 @@
 # Fuentes de mercado y supuestos (T01)
 
-> Versión 1.0 · 2026-11-11 · Mercado: Colombia · Moneda del modelo: USD (TRM base 3.300).
+> Versión 1.1 (revisión de costos, T01b) · 2026-11-11 · Mercado: Colombia · Moneda del modelo: USD (TRM base 3.300).
 > Fuente única de los números: `data/assumptions.json`. Este documento explica de dónde sale cada uno y cuánto confiar en él.
 
 ## Resumen en 5 líneas
 
-1. **34 supuestos**: 10 con fuente de mercado (`mercado`), 24 propios (`propio`) con su experimento de validación. Todos en `final`.
-2. **21 fuentes** con URL y fecha de consulta (2026-11-11). 5 son de EE. UU. (Cox, NADA, Morningstar) o de proveedores (WhatsApp): se usan como referencia y se explica cómo se adaptan.
+1. **34 supuestos**: 11 `mercado` (fuente + derivación declarada), 23 `propio` (uno de ellos, la plataforma, con fuente parcial) con su experimento de validación. Todos en `final`.
+2. **29 fuentes** con URL y fecha de consulta (2026-11-11). algunas son de EE. UU. (Cox, NADA, Morningstar) o de proveedores (WhatsApp, hosting): se usan como referencia y se explica cómo se adaptan.
 3. **Correcciones al BRD**: visitas al taller por año de 2,0 → **1,2** (un carro en Bogotá recorre ~9.000 km/año); ticket de mantenimiento de USD 220 → **170** base (220 pasa a optimista); conversión a seguros de 15 % → **10 %** base; tasa de descuento de 14 % → **17 %** (BanRep está en 12,25 %).
 4. **Costo de IA** por conversación: P USD 0,036 (gemini-3.6-flash, precios 2027) · B USD 0,009 (flash-lite) · O USD 0,006 (flash-lite, 4 turnos). **WhatsApp** cuesta más que la IA en el caso base (USD 0,019).
 5. Lo que más mueve el resultado y nadie ha medido: **retención actual, opt-in y respuesta al contacto**. Van primero en la validación con el cliente.
@@ -29,7 +29,7 @@ Leyenda: P/B/O = pesimista / base / optimista. «Propio» = sin fuente pública;
 |---|---|---|---|
 | Retención actual en taller | 18 % (fijo) | Propio (contexto F04) | Cifra del BRD. En EE. UU. solo el 54 % de dueños de autos de ≤ 2 años vuelve al concesionario (F04) y baja con la edad del carro. Un 18 % en años 2–5 es verosímil, pero **no está medido**. |
 | Retención meta año 3 | 24 % / 30 % / 38 % | Propio (contexto F04) | El 38 % del BRD pasa a optimista. Techo de referencia: 54 % (EE. UU., carros más nuevos). |
-| Visitas al taller por vehículo/año | 1,0 / 1,2 / 1,5 | F15 | ~9.000 km/año en Bogotá (SDA, dato de 2019) + intervalos de 10.000 km o 1 año → ~1 visita preventiva/año. El 2,0 del BRD estaba alto. Dato viejo y solo de Bogotá. |
+| Visitas al taller por vehículo/año | 1,0 / 1,2 / 1,5 | F15 (parcial) | De la fuente solo salen ~9.000 km/año en Bogotá (SDA, 2019); 1,0 es derivado con intervalo de 10.000 km (no verificado). El +0,2 de la base (visitas correctivas) es supuesto propio. El 2,0 del BRD estaba alto. |
 | Opt-in (consentimiento) | 45 % / 60 % / 70 % | Propio (marco F11) | La Ley 1581 exige autorización previa, expresa e informada (arts. 3 y 9) y con finalidad (art. 4). Sin opt-in no hay contacto: tope duro del embudo. |
 | Respuesta al contacto | 30 % / 45 % / 60 % | Propio | Sin dato público fiable para Colombia. Se valida con prueba A/B. |
 | Respuesta → cita | 30 % / 40 % / 50 % | Propio | Igual: se mide en el piloto. |
@@ -40,7 +40,7 @@ Leyenda: P/B/O = pesimista / base / optimista. «Propio» = sin fuente pública;
 
 | Supuesto | P / B / O | Fuente | Lectura crítica |
 |---|---|---|---|
-| Ticket de mantenimiento | USD 130 / 170 / 220 | F16 (contexto F05, F17) | Un primer mantenimiento de Kia K3 cuesta ~COP 400.000 (≈ USD 121). Los de 20.000–60.000 km incluyen más piezas. Los precios de taller suben 10,34 % anual (F17). NADA (USD 494/orden) es de EE. UU.: no aplica. **Fuente débil** (una nota de prensa): pedir el tarifario al cliente. |
+| Ticket de mantenimiento | USD 130 / 170 / 220 | F16 (contexto F05, F17) | Un primer mantenimiento de Kia K3 cuesta ~COP 400.000 (≈ USD 121): es la única cifra de fuente. El salto a 170 (+40 %) es estimación propia (se asume que los de 20.000–60.000 km incluyen más piezas). Los precios de taller suben 10,34 % anual (F17). NADA (USD 494/orden) es de EE. UU.: no aplica. **Fuente débil** (una nota de prensa): pedir el tarifario al cliente. |
 | Margen bruto del taller | 42 % / 48 % / 52 % | F06 | En EE. UU. servicio y repuestos rinden 45–55 % de margen bruto y > 40 % de la utilidad bruta del concesionario. No hay dato público en Colombia; el pesimista va algo por debajo. |
 | Attach de paquete de desgaste | 10 % / 18 % / 25 % | Propio | Se mide en el piloto. |
 | Ticket del paquete de desgaste | USD 100 / 140 / 180 | Propio (contexto F17) | Solo hay precios de talleres independientes, sin metodología. Llantas y rines bajaron 2,53 % anual. |
@@ -62,18 +62,18 @@ Leyenda: P/B/O = pesimista / base / optimista. «Propio» = sin fuente pública;
 | Supuesto | P / B / O | Fuente | Lectura crítica |
 |---|---|---|---|
 | Costo de LLM por conversación | USD 0,036 / 0,009 / 0,006 | F01 | 6 turnos × 2.500 tokens de entrada y 300 de salida. P = gemini-3.6-flash a USD 1,50/7,50 por 1M (precio desde 2027); B = flash-lite a 0,30/2,50; O = flash-lite con 4 turnos. Los tokens de razonamiento cuentan como salida y pueden subir el costo: **T10 lo mide**. |
-| Costo de WhatsApp por conversación | USD 0,030 / 0,019 / 0,017 | F03 (reglas F02, alternativa F21) | Desde el 1-10-2026 Meta cobra también utilidad y servicio dentro de la ventana de 24 h (F02). Colombia: marketing 0,0125; resto 0,0008 (F03). B = 1 marketing + 2 utilidad + 6 servicio. F03 y F21 son proveedores, no Meta: la tarifa oficial está en un CSV de Meta que no pudimos abrir. |
-| Opex de plataforma | USD 2.000 / 1.500 / 1.000 /mes | Propio | Cotizar hosting, observabilidad, BSP y licencias. |
-| Opex de equipo | USD 4.500 / 3.000 / 2.200 /mes | F20 | Desarrollador/a en Colombia: COP 3,06 M/mes promedio (Indeed, publicaciones de empleo, no encuesta). Carga prestacional ~1,5× no verificada. |
-| Horas de asesor ahorradas por cita | 0,15 / 0,25 / 0,35 h | Propio | Estudio de tiempos en el piloto. |
-| Costo hora del asesor | USD 5 / 7 / 9 | F19 (piso F18) | Oferta real en Bogotá: COP 3,0–3,5 M/mes + prestaciones (F19); mínimo 2026: COP 1.750.905 (F18). Una sola oferta: muestra pequeña. |
+| Costo de WhatsApp por conversación | USD 0,030 / 0,019 / 0,017 | F03 (reglas F02, alternativa F21) | Desde el 1-10-2026 Meta cobra también utilidad y servicio dentro de la ventana de 24 h (F02). Colombia: marketing 0,0125; resto 0,0008 (F03). B = 1 marketing + 2 utilidad + 6 servicio (mezcla supuesta). El margen del BSP del pesimista (0,005) es supuesto propio. F03 y F21 son proveedores, no Meta: la tarifa oficial está en un CSV de Meta que no pudimos abrir. |
+| Opex de plataforma | USD 735 / 315 / 120 /mes | F22–F24, F28 (parcial; tipo propio) | Vercel Pro USD 20 + USD 20 por asiento extra; Supabase Pro 25 + compute; 360dialog €49/mes. Lo de fuente suma 100 % en O, 46 % en B y 39 % en P; el resto (conector DMS/CRM, excedentes) es supuesto propio. Twilio cobra USD 0,005 por mensaje (F25): subiría el costo por conversación. |
+| Opex de equipo (incremental) | USD 3.380 / 1.435 / 635 /mes | F26 (F20, F27) | B = 0,5 operador (COP 3,06 M, Indeed) + 0,25 dev nivel medio (COP 6,5 M) × 1,50 de carga ÷ TRM 3.300. Las fracciones de tiempo son supuesto propio; +0,25 FTE de dev ≈ +USD 740/mes. |
+| Horas de asesor ahorradas por cita | 0,15 / 0,25 / 0,35 h | Propio | Sin fuente pública por cita (solo estimaciones de proveedores, descartadas). Estudio de tiempos en el piloto. |
+| Costo hora del asesor | USD 4 / 8 / 9 | F19 (piso F18; F27, F29) | Oferta en Bogotá COP 3,0–3,5 M (F19); mínimo 2026 COP 1.750.905 (F18); carga 1,38–1,58 (F27); 182 h/mes = 42 h × 52 / 12 (F29). Una sola oferta: muestra pequeña. |
 
 ### Inversión y finanzas
 
 | Supuesto | P / B / O | Fuente | Lectura crítica |
 |---|---|---|---|
-| Capex inicial | USD 80.000 / 60.000 / 45.000 | Propio | Estimar por fases con cotización de la integración al DMS/CRM. |
-| Tasa de descuento | 20 % / 17 % / 15 % | F14 | BanRep en 12,25 % (30-10-2026), inflación esperada 2027: 4,8 %. Base = tasa de política + ~5 pts de prima (supuesta). Es una tasa en pesos: conservadora para flujos en USD. |
+| Capex inicial | USD 71.800 / 47.500 / 17.300 | F26 (F27) | Equipo × meses × salario × carga ÷ 3.300 + únicos propios. B = 3 personas × 4 meses (2 devs a COP 6,5 M + 1 senior a 11,5 M, ×1,50) = USD 44.545 + 3.000. Tamaño, meses y únicos son supuesto propio; no incluye cobros del DMS/CRM. |
+| Tasa de descuento | 20 % / 17 % / 15 % | F14 (parcial) | BanRep en 12,25 % (30-10-2026), inflación esperada 2027: 4,8 % (de la fuente). El 17 % base = 12,25 % + ~5 pts de prima de riesgo: supuesto propio. Es una tasa en pesos: conservadora para flujos en USD. |
 | TRM | 3.600 / 3.300 / 3.100 COP/USD | F12 (F13) | TRM 11-11-2026: 3.297,07 (F12). Bancolombia: 3.120–3.300 en noviembre (F13). P = devaluación de ~9 % (supuesto). |
 
 ### Política del agente (valores del cliente, no se cambian)
@@ -109,8 +109,16 @@ Leyenda: P/B/O = pesimista / base / optimista. «Propio» = sin fuente pública;
 | F19 | Oferta: Asesor de servicio automotriz (Bogotá) | elempleo.com | https://www.elempleo.com/co/ofertas-trabajo/asesor-de-servicio-automotriz-1886335988 | 2026-11-11 |
 | F20 | Sueldo de desarrollador/a de software en Colombia | Indeed Colombia | https://co.indeed.com/salaries/desarrollador-de-software-Salaries | 2026-11-11 |
 | F21 | WhatsApp pricing update (desde 1-10-2026) | Chatalog | https://docs.chatalog.ai/platform-setup/whatsapp-connection-guide/whatsapp-pricing-update | 2026-11-11 |
+| F22 | Vercel Pricing (Pro: asientos y crédito de uso) | Vercel | https://vercel.com/pricing | 2026-11-11 |
+| F23 | Supabase Pricing (Pro y compute add-ons) | Supabase | https://supabase.com/pricing | 2026-11-11 |
+| F24 | 360dialog Pricing (planes WhatsApp API por número) | 360dialog | https://360dialog.com/pricing | 2026-11-11 |
+| F25 | WhatsApp API Pricing (tarifa por mensaje de Twilio) | Twilio | https://www.twilio.com/en-us/whatsapp/pricing | 2026-11-11 |
+| F26 | Salarios promedio en Colombia (desarrollador junior/medio/senior, abr-2026) | Colombia Move | https://colombiamove.com/blog/es/average-salaries-colombia-by-industry/ | 2026-11-11 |
+| F27 | Costo real de un empleado en Colombia 2026 | Buk | https://www.buk.co/blog/costo-real-de-un-empleado-en-colombia-2026 | 2026-11-11 |
+| F28 | Promedio mensual EUR/USD 2026 | x-rates.com | https://www.x-rates.com/average/?from=EUR&to=USD&amount=1&year=2026 | 2026-11-11 |
+| F29 | Desde hoy rige la jornada laboral de 42 horas en Colombia | Vanguardia | https://www.vanguardia.com/colombia/2026/07/15/desde-hoy-rige-la-jornada-laboral-de-42-horas-en-colombia-asi-queda-el-tiempo-del-almuerzo/ | 2026-11-11 |
 
-**Cómo se verificó:** las páginas HTML se abrieron con WebFetch y contienen la cifra citada. Los PDF (F05, F06, F07, F09, F10) no se podían leer con WebFetch (texto comprimido); se descargaron y se leyeron con `pdftotext`. F19 es una oferta de empleo y puede desaparecer.
+**Cómo se verificó:** las páginas HTML se abrieron con WebFetch y contienen la cifra citada. Los PDF (F05, F06, F07, F09, F10) no se podían leer con WebFetch (texto comprimido); se descargaron y se leyeron con `pdftotext`. F19 es una oferta de empleo y puede desaparecer. F22–F29 se abrieron con WebFetch (v1.1); F26 (rangos por nivel) es un blog sin metodología y F27 tiene un total publicado que no cuadra con sus propias líneas (se usa solo el rango 1,38–1,58).
 
 ## 5 supuestos críticos a validar con el cliente
 
@@ -122,6 +130,21 @@ Leyenda: P/B/O = pesimista / base / optimista. «Propio» = sin fuente pública;
 | 4 | Ticket (USD 170) y margen (48 %) | Convierten citas en utilidad; la fuente actual es débil | Exportar 6 meses de órdenes 20.000–60.000 km y P&L de postventa | Ticket ≥ USD 130 y margen ≥ 40 %; si no, escenario pesimista |
 | 5 | Visitas/año (1,2) | El BRD decía 2,0: pasar a 1,2 recorta ~40 % el ingreso de taller por vehículo retenido | Histórico del DMS por vehículo retenido | Visitas/año ≥ 1,0 |
 
+## Revisión de costos (v1.1)
+
+Objetivo: reemplazar costos sin fuente por derivaciones con fuente y supuestos de diseño declarados. Base de conversión: TRM 3.300 en los tres escenarios (el costo en pesos no se abarata en el pesimista).
+
+| Supuesto (P / B / O) | Antes → Después | Por qué |
+|---|---|---|
+| Capex inicial | 80.000 / 60.000 / 45.000 → **71.800 / 47.500 / 17.300** | Salarios por nivel (F26) × carga 1,38–1,58 (F27) × equipo y meses supuestos. El optimista baja mucho (2 personas × 3 meses): es el menos creíble; sin DMS/CRM ni gerencia de proyecto. |
+| Opex de plataforma | 2.000 / 1.500 / 1.000 → **735 / 315 / 120** | Precios publicados de Vercel, Supabase y 360dialog suman ~USD 145 en B. El resto (conector DMS/CRM, excedentes) es supuesto propio y es la mayor incertidumbre. |
+| Opex de equipo | 4.500 / 3.000 / 2.200 → **3.380 / 1.435 / 635** | Solo costo incremental (fracción de operador + dev); antes se usaba un dev casi completo. Depende de las fracciones supuestas. |
+| Costo hora asesor | 5 / 7 / 9 → **4 / 8 / 9** | Jornada de 42 h (182 h/mes, F29) y carga con fuente (F27); B sube al punto medio de la oferta (COP 3,25 M). |
+| Horas ahorradas por cita | 0,15 / 0,25 / 0,35 → sin cambio | No hay fuente pública por cita; queda propio con estudio de tiempos. |
+| Visitas, ticket, tasa de descuento, WhatsApp | sin cambio de valor | Solo notas: se declara qué parte es de la fuente y qué parte es supuesto propio (+0,2 visitas; USD 121 → 170; +5 pts de prima; margen del BSP y mezcla de mensajes). |
+
+Lectura honesta: los costos con fuente salen **menores** que los supuestos v1.0, pero las cifras más bajas dependen de decisiones propias (equipo pequeño, fracciones de tiempo, conector DMS barato). El riesgo al alza que no está en el modelo: un BSP con margen por mensaje (Twilio, USD 0,005 por mensaje, F25) elevaría el costo de WhatsApp por conversación por encima del pesimista de USD 0,03 (≈ 0,045–0,055 solo de margen).
+
 ## Qué no sabemos
 
 - **Retención real en Colombia** por edad del vehículo: no hay estudio público; solo datos de EE. UU. (Cox).
@@ -131,4 +154,6 @@ Leyenda: P/B/O = pesimista / base / optimista. «Propio» = sin fuente pública;
 - **Tarifa oficial de Meta** para Colombia: la vimos en dos proveedores (FormBeep y Chatalog) que no coinciden (0,0125 vs 0,015 en marketing); el CSV oficial no se pudo abrir.
 - **Kilometraje anual actual** en Colombia: el único dato oficial es de Bogotá y de 2019.
 - **Tokens reales por conversación**: 6 turnos × 2.500 es un supuesto; T10 lo mide con evals.
-- **Carga prestacional y jornada 2026**: usamos ~1,5× y ~185 h/mes sin verificar.
+- **Carga prestacional exacta**: F27 da 1,38–1,58 según ARL y exoneración; depende del contrato real. La jornada de 42 h (F29) es de prensa, no del texto de la ley.
+- **Cobro del DMS/CRM** por acceso a API y tiempo real de integración: sin dato público; es el mayor riesgo de capex y opex de plataforma.
+- **Cargo de alta/verificación de WhatsApp** (Meta): no pudimos confirmar si existe; cubierto con un único propio.
