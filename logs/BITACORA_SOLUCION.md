@@ -43,3 +43,13 @@
 - **Hallazgo de negocio (T07, supuestos v1.0):** base sin payback en 36 meses (VPN −140.878 USD), pesimista peor, optimista payback 11 meses. Causa: ~93 USD de margen por cita incremental (cálculo del Orquestador) frente a 4.500 USD/mes de costo fijo y 60.000 USD de inversión, ambos supuestos propios sin fuente.
 - **Decisión del usuario:** revisar costos con fuentes reales (T01b) + punto de equilibrio en el Excel (T07b); se publica el resultado que salga, aunque siga negativo.
 - Lanzadas T08 (opus·high), T01b y T07b (sonnet·medium).
+
+## 13:32–17:02 · Costos con fuente, T08 y protección de la demo (Orquestador)
+- **T07 ✅ / T07b ✅** (ca5ad16): Excel con hoja `Punto_Equilibrio`; pytest 15/15 con `formulas`. Un primer intento de verificación dio 9 fallos por carrera: T01b cambió los supuestos (v1.0 → v1.1) a mitad de la prueba; con v1.1 estable, 15/15.
+- **T01b ✅** (55bb23a): costos con fuente (salarios tech Colombia, precios de Vercel/Supabase/360dialog). Base: capex 60.000 → 47.500; opex plataforma 1.500 → 315; equipo 3.000 → 1.435 USD/mes (fracciones de FTE = supuesto propio). Riesgos señalados: capex optimista poco creíble; WhatsApp por mensaje (Twilio) podría superar el pesimista.
+- **Resultado v1.1:** base VPN −49.816 USD, sin payback en 36 m; cubre el opex (18,4 citas/mes de equilibrio vs 20,9 del embudo) pero recuperar en 24 m exige ~39 citas/mes (≈ 2,2 sedes). Optimista payback 4 m; pesimista VPN −179.803.
+- **T08 ✅** (1f0e76c): orquestador, sesión HMAC, 5 escenarios; suite 269/269, tsc 0. Aviso: tarifario solo 10k–40k → T02b.
+- **Incidente:** el usuario ejecutó `gh repo create --push` antes de reescribir autores → 8 commits con email personal públicos. Docs de GitHub: tras force push siguen accesibles por SHA en caché. **Decisión del usuario:** borrar y recrear. Historial reescrito en local con `git filter-branch --env-filter` (17 commits, todos noreply; comprobado con `git log --format=%ae`).
+- **Protección de la demo (decisión del usuario, recomendación del Orquestador):** clave sin facturación (AI Studio: gratis salvo clave de pago, comprobado aistudio.google.com/docs/billing) + código del jurado (`accessCode`, fallo cerrado) + tope de turnos + límite por IP best-effort; Vercel Password Protection descartada (USD 20/mes en Pro, no existe en Hobby; comprobado vercel.com/docs/deployment-protection). Contrato: `accessCode` opcional (cc6a78f).
+- **Revisión visual (Claude in Chrome, localhost:3000):** camino feliz (cotización COP 618.750 = USD 187,50 × 3.300) y handoff por síntoma crítico OK. Único error de consola: hidratación causada por una extensión del navegador (atributos `bis_skin_checked`), no por la app.
+- Lanzadas: T18 (protección), T12 (guion + código), T10 (evals), T13 (PDF), T02b (tarifario).
