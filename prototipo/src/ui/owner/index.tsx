@@ -73,7 +73,7 @@ export function OwnerApp({ session }: OwnerAppProps) {
           </p>
         )}
 
-        <form onSubmit={enviar} className="flex items-center gap-2 border-t border-slate-200 bg-white p-2.5">
+        <form onSubmit={enviar} className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-2.5">
           <label className="sr-only" htmlFor="mensaje">
             Escriba su mensaje
           </label>
@@ -85,6 +85,19 @@ export function OwnerApp({ session }: OwnerAppProps) {
             placeholder="Escriba su mensaje"
             className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-500"
           />
+          {session.nextScript && (
+            <button
+              type="button"
+              data-testid="script-next"
+              onClick={() => session.nextScript?.()}
+              disabled={
+                !session.scenarioId || session.loading || (session.scriptStep ?? 0) >= (session.scriptTotal ?? 0)
+              }
+              className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-brand/40 bg-white px-3 text-xs font-semibold text-brand hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Siguiente paso del guion ({session.scriptStep ?? 0}/{session.scriptTotal ?? 0})
+            </button>
+          )}
           <button
             type="submit"
             disabled={session.loading}

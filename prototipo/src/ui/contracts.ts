@@ -25,6 +25,13 @@ export interface DemoSession {
   act(accion: UserAction): void;
   reset(): void;
   takeCase(id: string): void;
+  /** Guion de demo (T12, aditivo): mensajes ya enviados / total del escenario. */
+  scriptStep?: number;
+  scriptTotal?: number;
+  /** Envía el siguiente mensaje de `mensajesGuion`. */
+  nextScript?(): void;
+  /** Hay un código del jurado activo (nunca se expone su valor). */
+  accessCodeActive?: boolean;
 }
 
 export interface OwnerAppProps {

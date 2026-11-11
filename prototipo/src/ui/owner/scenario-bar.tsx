@@ -36,6 +36,11 @@ export function ScenarioBar({ session }: OwnerAppProps) {
         );
       })}
       <div className="ml-auto flex items-center gap-2">
+        {session.accessCodeActive && (
+          <span data-testid="access-code-note" className="text-xs text-slate-600">
+            Código del jurado activo
+          </span>
+        )}
         <span
           data-testid="mode-badge"
           aria-label={`Modo del agente: ${modo}`}

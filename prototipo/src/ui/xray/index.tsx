@@ -94,11 +94,15 @@ function Fields({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function EventItem({ e }: { e: TraceEvent }) {
+function EventItem({ e, delay }: { e: TraceEvent; delay?: number }) {
   const Icon = SYSTEM_ICON[e.system];
   const st = STATUS_STYLE[e.status];
   return (
-    <li data-testid="trace-event" className="rounded-md border border-slate-700 bg-slate-900 p-2 text-xs">
+    <li
+      data-testid="trace-event"
+      style={delay === undefined ? undefined : { animationDelay: `${delay * 120}ms` }}
+      className={`${delay === undefined ? "" : "trace-in "}rounded-md border border-slate-700 bg-slate-900 p-2 text-xs`}
+    >
       <div className="flex flex-wrap items-center gap-1.5">
         <Icon aria-hidden className="h-4 w-4 text-sky-300" />
         <span className="font-semibold text-slate-100">{e.system}</span>
@@ -215,10 +219,14 @@ export function XrayConsole({ turns }: XrayConsoleProps) {
           </Panel>
 
           <Panel title="Línea de tiempo">
+            <style>{`@keyframes trace-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.trace-in{animation:trace-in .3s ease-out both}
+@media (prefers-reduced-motion: reduce){.trace-in{animation:none}}`}</style>
             <ol className="space-y-2">
-              {events.map((e) => (
-                <EventItem key={e.id} e={e} />
-              ))}
+              {events.map((e) => {
+                const idx = last.trace.findIndex((x) => x.id === e.id);
+                return <EventItem key={e.id} e={e} delay={idx >= 0 ? idx : undefined} />;
+              })}
             </ol>
           </Panel>
         </>
