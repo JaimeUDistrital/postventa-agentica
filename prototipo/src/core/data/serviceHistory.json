@@ -1,0 +1,15 @@
+[
+  { "id": "sh-01", "vehicleId": "veh-01", "fecha": "2024-06-20", "km": 9800, "servicio": "Mantenimiento 10.000 km", "enAgencia": true, "valorUsd": 95 },
+  { "id": "sh-02", "vehicleId": "veh-01", "fecha": "2025-07-02", "km": 19850, "servicio": "Mantenimiento 20.000 km", "enAgencia": true, "valorUsd": 190 },
+  { "id": "sh-03", "vehicleId": "veh-01", "fecha": "2026-05-15", "km": 26400, "servicio": "Cambio de aceite y filtro", "enAgencia": false, "valorUsd": 45 },
+  { "id": "sh-04", "vehicleId": "veh-02", "fecha": "2024-09-05", "km": 10100, "servicio": "Mantenimiento 10.000 km", "enAgencia": true, "valorUsd": 98 },
+  { "id": "sh-05", "vehicleId": "veh-02", "fecha": "2025-11-18", "km": 21050, "servicio": "Mantenimiento 20.000 km", "enAgencia": false, "valorUsd": 120 },
+  { "id": "sh-06", "vehicleId": "veh-03", "fecha": "2023-02-10", "km": 10400, "servicio": "Mantenimiento 10.000 km", "enAgencia": false, "valorUsd": 80 },
+  { "id": "sh-07", "vehicleId": "veh-03", "fecha": "2025-03-22", "km": 30600, "servicio": "Mantenimiento 30.000 km", "enAgencia": true, "valorUsd": 210 },
+  { "id": "sh-08", "vehicleId": "veh-03", "fecha": "2026-08-14", "km": 52300, "servicio": "Cambio de pastillas y revisión de frenos", "enAgencia": false, "valorUsd": 115 },
+  { "id": "sh-09", "vehicleId": "veh-04", "fecha": "2023-08-30", "km": 10300, "servicio": "Mantenimiento 10.000 km", "enAgencia": true, "valorUsd": 92 },
+  { "id": "sh-10", "vehicleId": "veh-04", "fecha": "2025-01-14", "km": 40000, "servicio": "Mantenimiento 40.000 km", "enAgencia": false, "valorUsd": 230 },
+  { "id": "sh-11", "vehicleId": "veh-04", "fecha": "2026-10-05", "km": 41200, "servicio": "Revisión general y cambio de batería", "enAgencia": false, "valorUsd": 135 },
+  { "id": "sh-12", "vehicleId": "veh-05", "fecha": "2022-06-11", "km": 10050, "servicio": "Mantenimiento 10.000 km", "enAgencia": true, "valorUsd": 88 },
+  { "id": "sh-13", "vehicleId": "veh-05", "fecha": "2024-05-03", "km": 30200, "servicio": "Mantenimiento 30.000 km", "enAgencia": false, "valorUsd": 170 }
+]

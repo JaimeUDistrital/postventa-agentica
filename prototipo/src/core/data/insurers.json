@@ -1,0 +1,5 @@
+[
+  { "id": "ins-01", "aseguradora": "Aliada Seguros A", "producto": "SOAT", "primaAnualUsd": 120, "coberturaResumen": "SOAT obligatorio: lesiones a terceros en accidentes de tránsito", "comisionAgenciaUsd": 12 },
+  { "id": "ins-02", "aseguradora": "Aliada Seguros A", "producto": "Todo riesgo", "primaAnualUsd": 780, "coberturaResumen": "Daños propios, robo total y responsabilidad civil extracontractual", "comisionAgenciaUsd": 65 },
+  { "id": "ins-03", "aseguradora": "Aliada Seguros B", "producto": "Todo riesgo", "primaAnualUsd": 690, "coberturaResumen": "Daños propios y robo total con asistencia en carretera", "comisionAgenciaUsd": 52 }
+]

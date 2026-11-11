@@ -1,0 +1,62 @@
+[
+  {
+    "id": "own-01",
+    "nombre": "Mariana Solano Herrera",
+    "cedula": "1012345678",
+    "celular": "3011234567",
+    "email": "mariana.solano@example.com",
+    "ciudad": "Bogotá",
+    "consentimientos": [
+      { "canal": "whatsapp", "optIn": true, "fecha": "2025-03-10", "finalidad": "Recordatorios de mantenimiento y ofertas de postventa" }
+    ],
+    "contactosUltimos30Dias": 0
+  },
+  {
+    "id": "own-02",
+    "nombre": "Andrés Felipe Castaño Ruiz",
+    "cedula": "1020456789",
+    "celular": "3109876543",
+    "email": "andres.castano@example.com",
+    "ciudad": "Medellín",
+    "consentimientos": [
+      { "canal": "whatsapp", "optIn": true, "fecha": "2024-11-02", "finalidad": "Recordatorios de mantenimiento y ofertas de postventa" }
+    ],
+    "contactosUltimos30Dias": 0
+  },
+  {
+    "id": "own-03",
+    "nombre": "Camila Andrea Mendoza Vélez",
+    "cedula": "1032147859",
+    "celular": "3205551234",
+    "email": "camila.mendoza@example.com",
+    "ciudad": "Cali",
+    "consentimientos": [
+      { "canal": "whatsapp", "optIn": true, "fecha": "2025-06-18", "finalidad": "Recordatorios de mantenimiento y ofertas de postventa" }
+    ],
+    "contactosUltimos30Dias": 0
+  },
+  {
+    "id": "own-04",
+    "nombre": "Julián Esteban Ocampo Parra",
+    "cedula": "1098765432",
+    "celular": "3154443322",
+    "email": "julian.ocampo@example.com",
+    "ciudad": "Bogotá",
+    "consentimientos": [
+      { "canal": "whatsapp", "optIn": true, "fecha": "2026-01-25", "finalidad": "Recordatorios de mantenimiento y ofertas de postventa" }
+    ],
+    "contactosUltimos30Dias": 0
+  },
+  {
+    "id": "own-05",
+    "nombre": "Daniela Lucía Ramírez Cortés",
+    "cedula": "1045678901",
+    "celular": "3122221100",
+    "email": "daniela.ramirez@example.com",
+    "ciudad": "Medellín",
+    "consentimientos": [
+      { "canal": "whatsapp", "optIn": false, "fecha": "2025-08-09", "finalidad": "Recordatorios de mantenimiento y ofertas de postventa" }
+    ],
+    "contactosUltimos30Dias": 0
+  }
+]

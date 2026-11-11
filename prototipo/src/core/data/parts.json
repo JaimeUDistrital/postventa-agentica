@@ -1,0 +1,19 @@
+[
+  { "sku": "FAC-CX30-01", "descripcion": "Filtro de aceite Mazda CX-30", "compatibles": ["Mazda CX-30"], "stock": 18, "precioUsd": 8.5, "fechaReposicion": null },
+  { "sku": "FAI-CX30-01", "descripcion": "Filtro de aire de motor Mazda CX-30", "compatibles": ["Mazda CX-30"], "stock": 12, "precioUsd": 14, "fechaReposicion": null },
+  { "sku": "FAC-COR-01", "descripcion": "Filtro de aceite Toyota Corolla Cross", "compatibles": ["Toyota Corolla Cross"], "stock": 11, "precioUsd": 9, "fechaReposicion": null },
+  { "sku": "FAI-COR-01", "descripcion": "Filtro de aire de motor Toyota Corolla Cross", "compatibles": ["Toyota Corolla Cross"], "stock": 8, "precioUsd": 15, "fechaReposicion": null },
+  { "sku": "FAC-DUS-01", "descripcion": "Filtro de aceite Renault Duster", "compatibles": ["Renault Duster"], "stock": 0, "precioUsd": 9, "fechaReposicion": "2026-11-20" },
+  { "sku": "FAI-DUS-01", "descripcion": "Filtro de aire de motor Renault Duster", "compatibles": ["Renault Duster"], "stock": 6, "precioUsd": 13, "fechaReposicion": null },
+  { "sku": "FAC-ONX-01", "descripcion": "Filtro de aceite Chevrolet Onix", "compatibles": ["Chevrolet Onix"], "stock": 8, "precioUsd": 7.5, "fechaReposicion": null },
+  { "sku": "FAI-ONX-01", "descripcion": "Filtro de aire de motor Chevrolet Onix", "compatibles": ["Chevrolet Onix"], "stock": 7, "precioUsd": 12, "fechaReposicion": null },
+  { "sku": "FAC-PIC-01", "descripcion": "Filtro de aceite Kia Picanto", "compatibles": ["Kia Picanto"], "stock": 6, "precioUsd": 7, "fechaReposicion": null },
+  { "sku": "FAI-PIC-01", "descripcion": "Filtro de aire de motor Kia Picanto", "compatibles": ["Kia Picanto"], "stock": 5, "precioUsd": 10, "fechaReposicion": null },
+  { "sku": "ACE-5W30-4L", "descripcion": "Aceite sintético 5W-30, envase 4 L", "compatibles": ["Mazda CX-30", "Toyota Corolla Cross", "Renault Duster", "Chevrolet Onix", "Kia Picanto"], "stock": 40, "precioUsd": 28, "fechaReposicion": null },
+  { "sku": "BUJ-IR-04", "descripcion": "Juego de bujías de iridio (4 unidades)", "compatibles": ["Mazda CX-30", "Toyota Corolla Cross", "Chevrolet Onix"], "stock": 20, "precioUsd": 36, "fechaReposicion": null },
+  { "sku": "BUJ-DUS-01", "descripcion": "Juego de bujías Renault Duster (4 unidades)", "compatibles": ["Renault Duster"], "stock": 12, "precioUsd": 30, "fechaReposicion": null },
+  { "sku": "BUJ-PIC-01", "descripcion": "Juego de bujías Kia Picanto (3 unidades)", "compatibles": ["Kia Picanto"], "stock": 16, "precioUsd": 22, "fechaReposicion": null },
+  { "sku": "FCAB-01", "descripcion": "Filtro de cabina (polen)", "compatibles": ["Mazda CX-30", "Toyota Corolla Cross", "Renault Duster", "Chevrolet Onix", "Kia Picanto"], "stock": 9, "precioUsd": 16, "fechaReposicion": null },
+  { "sku": "PAS-FRE-UNI", "descripcion": "Pastillas de freno delanteras", "compatibles": ["Mazda CX-30", "Toyota Corolla Cross", "Renault Duster", "Chevrolet Onix", "Kia Picanto"], "stock": 22, "precioUsd": 38, "fechaReposicion": null },
+  { "sku": "BAT-65AH", "descripcion": "Batería 65 Ah", "compatibles": ["Mazda CX-30", "Toyota Corolla Cross", "Renault Duster", "Chevrolet Onix", "Kia Picanto"], "stock": 6, "precioUsd": 118, "fechaReposicion": null }
+]
