@@ -1,0 +1,30 @@
+# Dependencias y builds
+node_modules/
+.next/
+out/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+test-results/
+playwright-report/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secretos (solo se versiona el ejemplo)
+.env*
+!.env.example
+
+# Fuera del repo público: prueba oficial y catálogo personal
+prueba-tecnica-ai-product-engineer-postventa-autos*.html
+Prueba técnica*.pdf
+Directorio Maestro IA*.xlsx
+
+# Entorno local
+.claude/
+.idea/
+.vscode/
+.DS_Store
+
+# Candado de E2E/build compartido entre agentes
+.e2e.lock

@@ -1,0 +1,45 @@
+{
+  "name": "prototipo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "sync:assumptions": "node scripts/sync-assumptions.mjs",
+    "predev": "node scripts/sync-assumptions.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/sync-assumptions.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run src",
+    "check:assumptions": "vitest run checks/assumptions",
+    "check:assumptions:final": "STRICT_ASSUMPTIONS=1 vitest run checks/assumptions",
+    "check:fixtures": "vitest run checks/fixtures",
+    "evals": "vitest run evals --passWithNoTests",
+    "e2e": "flock .e2e.lock playwright test",
+    "build:locked": "flock .e2e.lock npm run build"
+  },
+  "dependencies": {
+    "@google/genai": "3.1.0",
+    "lucide-react": "1.72.0",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.19.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "jsdom": "31.0.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  }
+}
