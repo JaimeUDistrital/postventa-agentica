@@ -70,7 +70,7 @@ export function describirEvento(e: TraceEvent, turn: AgentTurn): Frase {
         ? { texto: "No le escribió al cliente: no autorizó WhatsApp", resultado: "pausado" }
         : { texto: "Frenó una acción no permitida", resultado: "bloqueado" };
     case "llm":
-      // En «Modo guiado» el planner es determinista: no hubo IA que contar.
+      // Con el «Motor: reglas» el planner es determinista: no hubo IA que contar.
       return turn.mode === "llm" ? { texto: "Consultó la IA", resultado: "listo" } : null;
     default:
       return null;

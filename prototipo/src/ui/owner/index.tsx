@@ -1,9 +1,12 @@
 "use client";
 /** App del propietario: marco de teléfono con chat estilo WhatsApp y tarjetas de respuesta. */
-import { Bot, Play, Send } from "lucide-react";
+import { Bot, EyeOff, Play, Send } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { OwnerAppProps } from "@/ui/contracts";
-import { ReplyCardView } from "./cards";
+import { ReplyCardView, TARJETAS_ACCIONABLES } from "./cards";
+
+/** Igual que `AgentRequest.message` (máx. 1000): la API rechaza con 400 los mensajes más largos. */
+const MAX_MENSAJE = 1000;
 
 export function OwnerApp({ session }: OwnerAppProps) {
   const [texto, setTexto] = useState("");
@@ -14,6 +17,13 @@ export function OwnerApp({ session }: OwnerAppProps) {
     const el = scroller.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [session.messages.length, session.loading]);
+
+  // T20 · A2: solo la tarjeta accionable más reciente conserva sus botones.
+  let ultimaAccionable = "";
+  for (const m of session.messages)
+    m.cards.forEach((c, i) => {
+      if (TARJETAS_ACCIONABLES.has(c.type)) ultimaAccionable = `${m.id}-${i}`;
+    });
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +54,17 @@ export function OwnerApp({ session }: OwnerAppProps) {
             <div key={m.id} className={`flex flex-col gap-2 ${m.rol === "cliente" ? "items-end" : m.rol === "sistema" ? "items-center" : "items-start"}`}>
               {m.texto &&
                 (m.rol === "sistema" ? (
-                  <p className="rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-700">{m.texto}</p>
+                  <div
+                    role="note"
+                    data-testid="nota-interna"
+                    className="w-full max-w-[90%] rounded-lg border border-dashed border-slate-400 bg-slate-200/70 px-3 py-2 text-center text-xs text-slate-700"
+                  >
+                    <p className="flex items-center justify-center gap-1.5 font-semibold text-slate-800">
+                      <EyeOff aria-hidden className="size-3.5" />
+                      Nota interna · no se envió nada al cliente
+                    </p>
+                    <p className="mt-0.5">{m.texto}</p>
+                  </div>
                 ) : (
                   <p
                     className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-snug shadow-sm ${
@@ -55,7 +75,13 @@ export function OwnerApp({ session }: OwnerAppProps) {
                   </p>
                 ))}
               {m.cards.map((c, i) => (
-                <ReplyCardView key={`${m.id}-${i}`} card={c} act={session.act} disabled={session.loading} />
+                <ReplyCardView
+                  key={`${m.id}-${i}`}
+                  card={c}
+                  act={session.act}
+                  disabled={session.loading}
+                  anterior={TARJETAS_ACCIONABLES.has(c.type) && `${m.id}-${i}` !== ultimaAccionable}
+                />
               ))}
             </div>
           ))}
@@ -72,7 +98,7 @@ export function OwnerApp({ session }: OwnerAppProps) {
           </p>
         )}
 
-        {session.nextScript && (
+        {session.nextScript && session.demoMode !== "libre" && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-200 bg-brand-soft px-2.5 py-2">
             <button
               type="button"
@@ -105,6 +131,7 @@ export function OwnerApp({ session }: OwnerAppProps) {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             autoComplete="off"
+            maxLength={MAX_MENSAJE}
             placeholder="Escriba como si fuera el cliente…"
             className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 text-base text-slate-900 sm:text-sm placeholder:text-slate-500"
           />

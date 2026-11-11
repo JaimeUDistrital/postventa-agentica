@@ -9,13 +9,31 @@ export const formatCop = (valorUsd: number) => cop.format(Math.round(valorUsd * 
 export const formatUsd = (valorUsd: number) => usd.format(valorUsd);
 export const formatKm = (km: number) => `${miles.format(km)} km`;
 
-/** "YYYY-MM-DDTHH:mm" (hora local) → "jueves 12 de noviembre, 9:00 a. m.". Determinista: sin zona horaria del equipo. */
-export function formatFechaHora(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(iso);
-  if (!m) return iso;
+// Fechas "YYYY-MM-DDTHH:mm" en hora local de la agencia. Deterministas: se formatean en UTC, sin la zona del equipo.
+const RE_FECHA_HORA = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+const dia = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+const diaCorto = new Intl.DateTimeFormat("es-CO", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const hora = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC" });
+
+function aFecha(iso: string): Date | null {
+  const m = RE_FECHA_HORA.exec(iso);
+  if (!m) return null;
   const [y, mo, d, h, mi] = m.slice(1).map(Number);
-  const date = new Date(Date.UTC(y, mo - 1, d, h, mi));
-  const dia = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(date);
-  const hora = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC" }).format(date);
-  return `${dia}, ${hora}`;
+  return new Date(Date.UTC(y, mo - 1, d, h, mi));
+}
+const con = (f: Intl.DateTimeFormat) => (iso: string): string => {
+  const fecha = aFecha(iso);
+  return fecha ? f.format(fecha) : iso;
+};
+
+/** → "jueves, 12 de noviembre". */
+export const formatDia = con(dia);
+/** → "jue, 12 de nov". */
+export const formatDiaCorto = con(diaCorto);
+/** → "9:00 a. m.". */
+export const formatHora = con(hora);
+
+/** "YYYY-MM-DDTHH:mm" → "jueves, 12 de noviembre, 9:00 a. m.". */
+export function formatFechaHora(iso: string): string {
+  return aFecha(iso) ? `${formatDia(iso)}, ${formatHora(iso)}` : iso;
 }

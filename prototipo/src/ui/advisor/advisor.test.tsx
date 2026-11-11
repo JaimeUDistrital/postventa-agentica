@@ -50,3 +50,18 @@ test("se deshabilita si el estado no es abierto", () => {
   expect(onTake).not.toHaveBeenCalled();
   expect(screen.getByText("Caso tomado por usted")).toBeTruthy();
 });
+
+test("B · ordena por prioridad (alta > media > baja) y, dentro de la misma, el más reciente primero", () => {
+  const caso = (id: string, prioridad: "alta" | "media" | "baja", creadoEn: string) =>
+    HandoffCase.parse({ ...mk(id, "abierto"), prioridad, creadoEn, contexto: { ...mk(id, "abierto").contexto, clienteAlias: id } });
+  // Orden de llegada (el más reciente primero, como lo guarda la demo).
+  const cases = [
+    caso("baja-nueva", "baja", "2026-11-11T10:05:00.000Z"),
+    caso("media", "media", "2026-11-11T10:04:00.000Z"),
+    caso("alta-nueva", "alta", "2026-11-11T10:03:00.000Z"),
+    caso("alta-vieja", "alta", "2026-11-11T10:01:00.000Z"),
+  ];
+  render(<AdvisorInbox cases={cases} onTake={() => {}} />);
+  const orden = screen.getAllByTestId("handoff-card").map((el) => el.getAttribute("aria-label")?.split(":")[0]);
+  expect(orden).toEqual(["Caso de alta-nueva", "Caso de alta-vieja", "Caso de media", "Caso de baja-nueva"]);
+});

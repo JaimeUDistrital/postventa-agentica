@@ -76,6 +76,9 @@ test("sin_consentimiento: no se envía mensaje de contacto", async ({ page }) =>
   await page.goto("/");
   await page.getByTestId("scenario-btn-sin_consentimiento").click();
   await expect(chat(page).getByText(/no se envía mensaje/).first()).toBeVisible();
+  // T20 · C: nota interna del sistema (el cliente no la ve), sin tarjeta de bloqueo en el teléfono.
+  await expect(chat(page).getByRole("note")).toContainText("Nota interna · no se envió nada al cliente");
+  await expect(chat(page).getByTestId("card-bloqueo")).toHaveCount(0);
   await expect(chat(page).getByTestId("card-cotizacion")).toHaveCount(0);
   expect(errores).toEqual([]);
 });
@@ -83,9 +86,67 @@ test("sin_consentimiento: no se envía mensaje de contacto", async ({ page }) =>
 test("Reiniciar limpia el chat y el guion", async ({ page }) => {
   await page.goto("/?codigo=prueba");
   await expect(page.getByText("Código del jurado activo")).toBeVisible();
+  // T20 · D: el código no queda en la barra de direcciones.
+  await expect(page).not.toHaveURL(/codigo=/);
   await page.getByTestId("scenario-btn-feliz").click();
   await siguiente(page).click();
   await page.getByRole("button", { name: "Reiniciar", exact: true }).click();
   await expect(siguiente(page)).toBeDisabled();
   await expect(siguiente(page)).toContainText("0/0");
+});
+
+test("T20 · A: el paquete no se agrega dos veces y las tarjetas viejas pierden sus botones", async ({ page }) => {
+  const errores = vigilaConsola(page);
+  await page.goto("/");
+  await page.getByTestId("scenario-btn-feliz").click();
+  await chat(page).getByRole("button", { name: "Agregar paquete de desgaste" }).click();
+  await expect(chat(page).getByText("Paquete de desgaste incluido")).toBeVisible();
+  await expect(chat(page).getByRole("button", { name: "Agregar paquete de desgaste" })).toHaveCount(0);
+  await expect(chat(page).getByText(/Cotización anterior/)).toHaveCount(1);
+  // el guion pide frenos otra vez: el agente no vuelve a cotizar
+  await siguiente(page).click();
+  await expect(chat(page).getByTestId("card-cotizacion")).toHaveCount(3);
+  await siguiente(page).click();
+  await expect(chat(page).getByText("El paquete ya está incluido en su cotización. ¿Le agendo la cita?")).toBeVisible();
+  await expect(chat(page).getByTestId("card-cotizacion")).toHaveCount(3);
+  await chat(page).getByRole("button", { name: "Quitar paquete" }).click();
+  await expect(chat(page).getByRole("button", { name: "Agregar paquete de desgaste" })).toHaveCount(1);
+  expect(errores).toEqual([]);
+});
+
+test("T20 · F2: «Modo libre» oculta el guion sin borrar la conversación", async ({ page }) => {
+  const errores = vigilaConsola(page);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Demo guiada" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByTestId("scenario-btn-feliz").click();
+  await expect(chat(page).getByTestId("card-cotizacion").first()).toBeVisible();
+  await page.getByRole("button", { name: "Modo libre" }).click();
+  await expect(siguiente(page)).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Pasos para usar la consola" })).toHaveCount(0);
+  await expect(chat(page).getByTestId("card-cotizacion").first()).toBeVisible();
+  await page.getByLabel("Escriba su mensaje").fill("¿Cuánto me cuesta?");
+  await page.getByRole("button", { name: "Enviar mensaje" }).click();
+  await expect(chat(page).getByTestId("card-cotizacion")).toHaveCount(2);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Modo libre" })).toHaveAttribute("aria-pressed", "true");
+  expect(errores).toEqual([]);
+});
+
+test("T20 · G: la reserva aparece en la «Agenda del taller» con su estado", async ({ page }) => {
+  const errores = vigilaConsola(page);
+  await page.goto("/");
+  await page.getByTestId("scenario-btn-feliz").click();
+  await chat(page).getByRole("button", { name: "Agendar" }).click();
+  await expect(chat(page).getByTestId("card-reserva").first()).toBeVisible();
+  await expect(page.getByTestId("agenda-contador")).toContainText("1");
+  await page.getByRole("tab", { name: /Agenda del taller/ }).click();
+  const cita = page.getByTestId("agenda-cita");
+  await expect(cita).toContainText("Mariana S.");
+  await expect(cita).toContainText("Reservada");
+  await page.getByRole("tab", { name: /Conversación/ }).click();
+  await chat(page).getByRole("button", { name: "Confirmar reserva" }).click();
+  await expect(chat(page).getByText("Reserva confirmada").first()).toBeVisible();
+  await page.getByRole("tab", { name: /Agenda del taller/ }).click();
+  await expect(cita).toContainText("Confirmada");
+  expect(errores).toEqual([]);
 });

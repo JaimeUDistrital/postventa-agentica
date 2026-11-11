@@ -1,13 +1,29 @@
 "use client";
-import { CalendarCheck, Gauge, Headset, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
+import { CalendarCheck, CircleCheck, Gauge, Headset, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
 import type { ReactNode } from "react";
-import type { ReplyCard, UserAction } from "@/core/contracts";
+import type { PriceQuote, ReplyCard, UserAction } from "@/core/contracts";
+import { parseQuoteId } from "@/core/tools/quote";
 import { formatCop, formatFechaHora, formatKm, formatUsd } from "./format";
 
 interface Props {
   card: ReplyCard;
   act: (accion: UserAction) => void;
   disabled?: boolean;
+  /** T20: ya hay una tarjeta accionable más reciente; esta no ofrece botones (evita bucles). */
+  anterior?: boolean;
+}
+
+/** Tarjetas con botones de acción: solo la más reciente de la conversación los muestra (T20 · A2). */
+export const TARJETAS_ACCIONABLES: ReadonlySet<ReplyCard["type"]> = new Set(["cotizacion", "reserva"]);
+
+/**
+ * T20 · A1: la cotización incluye un paquete de venta cruzada (VC-PAS-01, VC-BAT-01, VC-ALI-01).
+ * Se lee del id de la cotización, que codifica los extras; la alineación no tiene SKU en sus líneas.
+ */
+export const incluyePaquete = (q: PriceQuote): boolean => (parseQuoteId(q.id)?.extras.length ?? 0) > 0;
+
+function NotaAnterior({ children }: { children: ReactNode }) {
+  return <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">{children}</p>;
 }
 
 const base = "w-full rounded-2xl border bg-white p-3.5 text-sm shadow-sm";
@@ -27,7 +43,7 @@ function Titulo({ icono, children }: { icono: ReactNode; children: ReactNode }) 
   );
 }
 
-export function ReplyCardView({ card, act, disabled }: Props) {
+export function ReplyCardView({ card, act, disabled, anterior = false }: Props) {
   switch (card.type) {
     case "alerta_km":
       return (
@@ -45,9 +61,19 @@ export function ReplyCardView({ card, act, disabled }: Props) {
       );
     case "cotizacion": {
       const q = card.quote;
+      const conPaquete = incluyePaquete(q);
       return (
         <article aria-label="Cotización" data-testid="card-cotizacion" className={base + " border-slate-200"}>
           <Titulo icono={<Clock className="size-4" />}>Cotización de {formatKm(q.hitoKm)}</Titulo>
+          {conPaquete && (
+            <p
+              data-testid="paquete-incluido"
+              className="mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800"
+            >
+              <CircleCheck aria-hidden className="size-3.5" />
+              Paquete de desgaste incluido
+            </p>
+          )}
           <ul className="divide-y divide-slate-100">
             {q.items.map((l, i) => (
               <li key={`${l.sku ?? l.concepto}-${i}`} className="flex justify-between gap-3 py-1.5">
@@ -74,14 +100,24 @@ export function ReplyCardView({ card, act, disabled }: Props) {
               </dd>
             </div>
           </dl>
-          <div className="mt-3 grid gap-2">
-            <button type="button" disabled={disabled} onClick={() => act("aceptar_mantenimiento")} className={btnPrimario}>
-              Agendar
-            </button>
-            <button type="button" disabled={disabled} onClick={() => act("agregar_venta_cruzada")} className={btnSecundario}>
-              Agregar paquete de desgaste
-            </button>
-          </div>
+          {anterior ? (
+            <NotaAnterior>Cotización anterior · use la más reciente de la conversación.</NotaAnterior>
+          ) : (
+            <div className="mt-3 grid gap-2">
+              <button type="button" disabled={disabled} onClick={() => act("aceptar_mantenimiento")} className={btnPrimario}>
+                Agendar
+              </button>
+              {conPaquete ? (
+                <button type="button" disabled={disabled} onClick={() => act("rechazar_venta_cruzada")} className={btnSecundario}>
+                  Quitar paquete
+                </button>
+              ) : (
+                <button type="button" disabled={disabled} onClick={() => act("agregar_venta_cruzada")} className={btnSecundario}>
+                  Agregar paquete de desgaste
+                </button>
+              )}
+            </div>
+          )}
         </article>
       );
     }
@@ -93,14 +129,17 @@ export function ReplyCardView({ card, act, disabled }: Props) {
           <Titulo icono={<CalendarCheck className="size-4" />}>{confirmada ? "Reserva confirmada" : "Reserva pendiente de confirmar"}</Titulo>
           <p className="font-medium text-slate-900 first-letter:uppercase">{formatFechaHora(b.inicio)}</p>
           <p className="text-slate-600">Bahía {b.bahia} · Referencia {b.id}</p>
-          {!confirmada && (
-            <>
-              <p className="mt-1 text-xs text-slate-600">Apartamos su cupo hasta {formatFechaHora(b.holdHasta)}.</p>
-              <button type="button" disabled={disabled} onClick={() => act("confirmar_reserva")} className={btnPrimario + " mt-3"}>
-                Confirmar reserva
-              </button>
-            </>
-          )}
+          {!confirmada &&
+            (anterior ? (
+              <NotaAnterior>Reserva anterior · use la tarjeta más reciente de la conversación.</NotaAnterior>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-slate-600">Apartamos su cupo hasta {formatFechaHora(b.holdHasta)}.</p>
+                <button type="button" disabled={disabled} onClick={() => act("confirmar_reserva")} className={btnPrimario + " mt-3"}>
+                  Confirmar reserva
+                </button>
+              </>
+            ))}
         </article>
       );
     }
@@ -136,9 +175,6 @@ export function ReplyCardView({ card, act, disabled }: Props) {
               </li>
             ))}
           </ul>
-          <button type="button" disabled={disabled} onClick={() => act("ver_seguros")} className={btnSecundario + " mt-3"}>
-            Ver seguros
-          </button>
         </article>
       );
     case "handoff":

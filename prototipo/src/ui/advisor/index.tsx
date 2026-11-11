@@ -19,6 +19,15 @@ const PRIORIDAD: Record<HandoffCase["prioridad"], { label: string; cls: string }
   baja: { label: "Prioridad baja", cls: "bg-slate-100 text-slate-700 ring-slate-200" },
 };
 
+const PESO: Record<HandoffCase["prioridad"], number> = { alta: 0, media: 1, baja: 2 };
+
+/** T20 · B: prioridad (alta > media > baja) y, dentro de la misma, el más reciente primero. */
+export function ordenarCasos(cases: HandoffCase[]): HandoffCase[] {
+  return [...cases].sort(
+    (a, b) => PESO[a.prioridad] - PESO[b.prioridad] || Date.parse(b.creadoEn) - Date.parse(a.creadoEn),
+  );
+}
+
 function Card({ c, onTake }: { c: HandoffCase; onTake: (id: string) => void }) {
   const p = PRIORIDAD[c.prioridad];
   const taken = c.estado !== "abierto";
@@ -95,7 +104,7 @@ export function AdvisorInbox({ cases, onTake }: AdvisorInboxProps) {
             Nada pendiente: el agente lo está resolviendo.
           </p>
         ) : (
-          cases.map((c) => <Card key={c.id} c={c} onTake={onTake} />)
+          ordenarCasos(cases).map((c) => <Card key={c.id} c={c} onTake={onTake} />)
         )}
       </div>
     </section>

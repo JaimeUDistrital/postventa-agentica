@@ -2,7 +2,7 @@
  * Contratos entre las zonas de la UI (T05 owner, T06 xray/advisor, T12 demo).
  * Dueño: Orquestador.
  */
-import type { AgentState, AgentTurn, HandoffCase, ReplyCard, ScenarioId, UserAction } from "@/core/contracts";
+import type { AgentState, AgentTurn, Booking, HandoffCase, ReplyCard, ScenarioId, UserAction } from "@/core/contracts";
 
 export interface ChatMessage {
   id: string;
@@ -11,6 +11,9 @@ export interface ChatMessage {
   cards: ReplyCard[];
   turnId?: string;
 }
+
+/** T20: «Demo guiada» (guion y pasos para el jurado) o «Modo libre» (como en producción). */
+export type DemoMode = "guiada" | "libre";
 
 export interface DemoSession {
   scenarioId: ScenarioId | null;
@@ -34,6 +37,17 @@ export interface DemoSession {
   accessCodeActive?: boolean;
   /** T19 (aditivo): último estado conocido de cada cliente (escenario) en esta demo. */
   clients?: Partial<Record<ScenarioId, ClientSnapshot>>;
+  /** T20 (aditivo): modo de uso de la demo; cambiarlo no borra las conversaciones. */
+  demoMode?: DemoMode;
+  setDemoMode?(modo: DemoMode): void;
+  /** T20 (aditivo): reservas hechas en esta demo (tarjetas «reserva» de cualquier cliente), para la agenda. */
+  bookings?: DemoBooking[];
+}
+
+/** T20: una reserva de la demo y el cliente (escenario) que la hizo. */
+export interface DemoBooking {
+  scenarioId: ScenarioId;
+  booking: Booking;
 }
 
 /** T19: lo mínimo que la lista «Clientes de hoy» necesita de cada cliente. */

@@ -91,6 +91,11 @@ test("sin_consentimiento: no hay mensaje de contacto ni cotización", async () =
   expect(within(chat()).queryByTestId("card-alerta_km")).toBeNull();
   expect(within(chat()).queryByTestId("card-cotizacion")).toBeNull();
   expect(within(chat()).getByRole("log").textContent).toContain("no se envía mensaje");
+  // T20 · C: es una nota interna (el cliente no la ve), no una burbuja ni una tarjeta del agente.
+  const nota = within(chat()).getByRole("note");
+  expect(nota.textContent).toContain("Nota interna · no se envió nada al cliente");
+  expect(nota.textContent).toContain("no se envía mensaje");
+  expect(within(chat()).queryByTestId("card-bloqueo")).toBeNull();
   // contacto proactivo bloqueado; solo responde cuando el cliente escribe
   await paso();
   await within(chat()).findAllByTestId("card-cotizacion");
@@ -120,4 +125,31 @@ test("sin código no se envía accessCode ni se muestra la nota", async () => {
   await inicia("feliz");
   expect(bodies.some((b) => "accessCode" in b)).toBe(false);
   expect(screen.queryByText("Código del jurado activo")).toBeNull();
+});
+
+test("D · el código se borra de la barra de direcciones y se conservan la ruta, los demás parámetros y el ancla", async () => {
+  window.history.replaceState({}, "", "/consola?x=1&codigo=JURADO-XYZ&y=2#zona");
+  render(<Home />);
+  await screen.findByText("Código del jurado activo");
+  expect(window.location.pathname).toBe("/consola");
+  expect(window.location.search).toBe("?x=1&y=2");
+  expect(window.location.hash).toBe("#zona");
+  expect(window.location.href).not.toContain("JURADO-XYZ");
+  expect(window.sessionStorage.getItem("postventa.codigo")).toBe("JURADO-XYZ");
+});
+
+test("D · si el navegador no deja reescribir la URL, el código sigue activo", async () => {
+  window.history.replaceState({}, "", "/?codigo=JURADO-XYZ");
+  const spy = vi.spyOn(window.history, "replaceState").mockImplementation(() => {
+    throw new Error("bloqueado");
+  });
+  try {
+    render(<Home />);
+    await screen.findByText("Código del jurado activo");
+    fireEvent.click(screen.getByTestId("scenario-btn-feliz"));
+    await screen.findAllByTestId("trace-event");
+    expect(bodies.every((b) => b.accessCode === "JURADO-XYZ")).toBe(true);
+  } finally {
+    spy.mockRestore();
+  }
 });

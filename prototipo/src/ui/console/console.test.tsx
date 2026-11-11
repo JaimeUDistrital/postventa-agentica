@@ -6,10 +6,12 @@ import { POST } from "@/app/api/agent/route";
 import Home from "@/app/page";
 import type { AgentTurn, TraceEvent } from "@/core/contracts";
 import { resumirActividad } from "./activity";
+import { modoLabel } from "./header";
 import { estadoCliente } from "./status";
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  window.localStorage.clear();
   window.history.replaceState({}, "", "/");
   vi.stubGlobal("fetch", (_input: RequestInfo | URL, init?: RequestInit) =>
     POST(new Request("http://localhost/api/agent", init)),
@@ -63,7 +65,7 @@ test("feliz: «Qué hizo el agente» en frases humanas y la etiqueta del cliente
   expect(within(act).getAllByText("Listo").length).toBeGreaterThan(0);
   expect(status("feliz")).toBe("Conversando");
   expect(pasoActual()).toContain("Vea la conversación");
-  expect(screen.getByTestId("mode-badge").textContent).toBe("Modo guiado");
+  expect(screen.getByTestId("mode-badge").textContent).toBe("Motor: reglas");
   expect(screen.getByRole("heading", { name: /WhatsApp · Mariana S\./ })).toBeTruthy();
   expect(screen.getByText("Así lo ve el cliente")).toBeTruthy();
 
@@ -138,6 +140,23 @@ test("«¿Cómo funciona?» abre un panel propio y se cierra con Esc", async () 
   expect(document.activeElement).toBe(btn);
 });
 
+test("E · en xl la app ocupa el alto visible y cada columna tiene su propio scroll", () => {
+  // jsdom no mide layout: se fijan las clases que lo garantizan; la verificación visual se hace en Chrome.
+  render(<Home />);
+  const tiene = (el: Element, ...cls: string[]) => cls.forEach((c) => expect(el.classList.contains(c), `${c} en ${el.tagName}`).toBe(true));
+  const main = screen.getByRole("main");
+  tiene(main, "min-h-dvh", "xl:h-dvh", "xl:overflow-hidden");
+  expect(main.classList.contains("min-h-screen")).toBe(false);
+  const grid = screen.getByTestId("console-grid");
+  tiene(grid, "min-h-0", "flex-1", "xl:grid-rows-[minmax(0,1fr)]");
+  const columnas = [
+    screen.getByRole("navigation", { name: "Clientes de hoy" }),
+    document.getElementById("conversacion")!,
+    screen.getByRole("region", { name: "Panel del asesor" }),
+  ];
+  for (const col of columnas) tiene(col, "xl:min-h-0", "xl:overflow-y-auto");
+});
+
 test("Reiniciar limpia los estados de los clientes", async () => {
   render(<Home />);
   await elige("feliz");
@@ -147,7 +166,119 @@ test("Reiniciar limpia los estados de los clientes", async () => {
   expect(pasoActual()).toContain("Elija un cliente");
 });
 
+describe("G · pestañas «Conversación» | «Agenda del taller»", () => {
+  const pestana = (nombre: RegExp) => screen.getByRole("tab", { name: nombre });
+  const agenda = () => screen.getByRole("tabpanel", { name: /Agenda del taller/ });
+
+  test("las reservas de la demo aparecen en la agenda, con contador, y sobreviven al cambio de cliente", async () => {
+    render(<Home />);
+    expect(screen.getByRole("tablist", { name: "Vista central" })).toBeTruthy();
+    expect(pestana(/Conversación/).getAttribute("aria-selected")).toBe("true");
+    expect(pestana(/Agenda del taller/).textContent).toContain("0");
+    await elige("feliz");
+    fireEvent.click((await within(screen.getByTestId("owner-chat")).findAllByRole("button", { name: "Agendar" })).at(-1)!);
+    await idle();
+    await waitFor(() => expect(pestana(/Agenda del taller/).textContent).toContain("1"));
+
+    fireEvent.click(pestana(/Agenda del taller/));
+    expect(pestana(/Agenda del taller/).getAttribute("aria-selected")).toBe("true");
+    const cita = within(agenda()).getByTestId("agenda-cita");
+    expect(cita.textContent).toContain("Mariana S.");
+    expect(cita.textContent).toContain("Reservada");
+    // la conversación sigue montada (oculta), sin perder lo escrito
+    expect(screen.getByTestId("owner-chat").closest('[role="tabpanel"]')!.hasAttribute("hidden")).toBe(true);
+
+    fireEvent.click(pestana(/Conversación/));
+    fireEvent.click((await within(screen.getByTestId("owner-chat")).findAllByRole("button", { name: "Confirmar reserva" })).at(-1)!);
+    await idle();
+    fireEvent.click(pestana(/Agenda del taller/));
+    await waitFor(() => expect(within(agenda()).getByTestId("agenda-cita").textContent).toContain("Confirmada"));
+    fireEvent.click(pestana(/Conversación/));
+
+    await elige("sintoma_critico");
+    expect(pestana(/Agenda del taller/).textContent).toContain("1");
+    fireEvent.click(screen.getByRole("button", { name: "Reiniciar" }));
+    expect(pestana(/Agenda del taller/).textContent).toContain("0");
+  });
+
+  test("las flechas del teclado cambian de pestaña", () => {
+    render(<Home />);
+    fireEvent.keyDown(pestana(/Conversación/), { key: "ArrowRight" });
+    expect(pestana(/Agenda del taller/).getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(pestana(/Agenda del taller/));
+    fireEvent.keyDown(pestana(/Agenda del taller/), { key: "ArrowLeft" });
+    expect(pestana(/Conversación/).getAttribute("aria-selected")).toBe("true");
+  });
+});
+
+describe("F2 · Demo guiada y Modo libre", () => {
+  const modo = (nombre: string) => screen.getByRole("button", { name: nombre });
+  const guion = () => screen.queryByRole("button", { name: /Siguiente mensaje del cliente/ });
+
+  test("por defecto «Demo guiada»: pasos y botón del guion con su contador", async () => {
+    render(<Home />);
+    expect(screen.getByRole("group", { name: "Modo de la demo" })).toBeTruthy();
+    expect(modo("Demo guiada").getAttribute("aria-pressed")).toBe("true");
+    expect(modo("Modo libre").getAttribute("aria-pressed")).toBe("false");
+    await elige("feliz");
+    expect(guion()?.textContent).toContain("0/3");
+    expect(screen.getByText("Simula lo que escribe el cliente")).toBeTruthy();
+    expect(pasoActual()).toContain("Vea la conversación");
+  });
+
+  test("«Modo libre» oculta guion, ayuda y pasos, sin borrar la conversación; se puede volver", async () => {
+    render(<Home />);
+    await elige("feliz");
+    const tarjetas = within(screen.getByTestId("owner-chat")).getAllByTestId("card-cotizacion").length;
+    fireEvent.click(modo("Modo libre"));
+    expect(modo("Modo libre").getAttribute("aria-pressed")).toBe("true");
+    expect(guion()).toBeNull();
+    expect(screen.queryByText("Simula lo que escribe el cliente")).toBeNull();
+    expect(screen.queryByRole("list", { name: "Pasos para usar la consola" })).toBeNull();
+    // se mantiene todo lo demás
+    expect(within(screen.getByTestId("owner-chat")).getAllByTestId("card-cotizacion")).toHaveLength(tarjetas);
+    expect(screen.getByLabelText("Escriba su mensaje")).toBeTruthy();
+    expect(screen.getByRole("navigation", { name: "Clientes de hoy" })).toBeTruthy();
+    expect(screen.getByTestId("agent-activity")).toBeTruthy();
+    expect(screen.getByTestId("advisor-inbox")).toBeTruthy();
+    expect(window.localStorage.getItem("postventa.modoDemo")).toBe("libre");
+    fireEvent.click(modo("Demo guiada"));
+    expect(guion()?.textContent).toContain("0/3");
+  });
+
+  test("recuerda la elección del visitante", async () => {
+    window.localStorage.setItem("postventa.modoDemo", "libre");
+    render(<Home />);
+    await waitFor(() => expect(modo("Modo libre").getAttribute("aria-pressed")).toBe("true"));
+    expect(guion()).toBeNull();
+  });
+
+  test("funciona sin localStorage", async () => {
+    const get = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("bloqueado");
+    });
+    const set = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("bloqueado");
+    });
+    try {
+      render(<Home />);
+      expect(modo("Demo guiada").getAttribute("aria-pressed")).toBe("true");
+      fireEvent.click(modo("Modo libre"));
+      expect(modo("Modo libre").getAttribute("aria-pressed")).toBe("true");
+    } finally {
+      get.mockRestore();
+      set.mockRestore();
+    }
+  });
+});
+
 describe("funciones puras", () => {
+  test("F1 · etiqueta del motor: reglas, IA o en espera", () => {
+    expect(modoLabel("deterministic")).toBe("Motor: reglas");
+    expect(modoLabel("llm")).toBe("IA Gemini activa");
+    expect(modoLabel(null)).toBe("En espera");
+  });
+
   test("estadoCliente cubre todos los estados", () => {
     expect(estadoCliente(undefined)).toBe("pendiente");
     expect(estadoCliente({ state: "TRIGGER", sinPermisoWhatsapp: true })).toBe("sin_permiso");

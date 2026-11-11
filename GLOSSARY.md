@@ -34,6 +34,10 @@ Términos del dominio automotriz y del producto, tal como se usan en este repo.
 - **Autonomía (informar / recomendar / ejecutar)**: nivel de acción permitido al agente: solo dar información, sugerir, o actuar por sí mismo.
 - **Código del jurado**: valor secreto de `DEMO_ACCESS_CODE` que, vía `?codigo=`, habilita Gemini en la demo pública.
 - **Consola del asesor**: interfaz de la demo con clientes de hoy, conversación y panel de acciones.
+- **Motor de reglas**: lo que la consola muestra como «Motor: reglas» cuando responde el planner determinista (modo determinista, sin IA). No es lo mismo que la «Demo guiada».
+- **Demo guiada**: modo de uso por defecto de la consola: muestra los 3 pasos y el botón «Siguiente mensaje del cliente», que envía el guion del escenario.
+- **Modo libre**: modo de uso como en producción: sin guion ni pasos; se escribe como cliente o se usan los botones de las tarjetas. Cambiar de modo no borra las conversaciones.
+- **Agenda del taller**: pestaña de la consola con los cupos de cada bahía por día («Libre» / «Ocupado») y, resaltadas, las citas hechas en la demo con su estado («Reservada» / «Confirmada»).
 - **Token de sesión**: estado firmado (HMAC) que viaja con cada turno; no hay base de datos.
 - **Evals**: casos con criterios pasa/no pasa para medir al agente.
 

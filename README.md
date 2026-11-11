@@ -20,7 +20,7 @@ La interfaz es una **Consola del asesor**.
 
 1. En **Clientes de hoy** hay 5 clientes, uno por escenario: mantenimiento de 30.000 km, síntoma crítico, repuesto sin stock, intento de manipulación y sin consentimiento.
 2. Elige uno: se abre la conversación de WhatsApp.
-3. Pulsa **Siguiente mensaje del cliente** para avanzar el guion paso a paso.
+3. En **Demo guiada** (por defecto), pulsa **Siguiente mensaje del cliente** para avanzar el guion paso a paso; en **Modo libre** escribe como cliente o usa los botones de las tarjetas, como en producción.
 4. Mira **Qué hizo el agente** (acciones y decisiones) y **Necesita su acción** (lo que debe resolver el asesor humano).
 5. **Ver detalle técnico** abre la traza (herramientas, Guardián, memoria).
 

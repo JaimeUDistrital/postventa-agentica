@@ -141,8 +141,10 @@ export function planificar(input: PlannerInput): PlannerStep {
   switch (intencion) {
     case "venta_cruzada": {
       const extra = extraVentaCruzada(input.maskedMessage);
-      const extras = base.extras.includes(extra) ? base.extras : [...base.extras, extra];
-      return cotizar(input, { ...base, extras }, intencion);
+      // T20: si ya está incluido no se vuelve a cotizar lo mismo (evita bucles del botón o del guion).
+      if (base.extras.includes(extra))
+        return final(input, "El paquete ya está incluido en su cotización. ¿Le agendo la cita?", [], "COTIZACION");
+      return cotizar(input, { ...base, extras: [...base.extras, extra] }, intencion);
     }
     case "rechazar_venta_cruzada":
       return base.extras.length > 0

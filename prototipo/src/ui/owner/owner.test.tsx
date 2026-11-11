@@ -120,16 +120,16 @@ test("alternativas lista franjas y motivo", () => {
   expect(c.querySelectorAll("li").length).toBe(1);
 });
 
-test("seguro: prima en COP y Ver seguros", () => {
-  const s = renderCards([
+test("seguro: prima en COP y no vuelve a ofrecer «Ver seguros» (T20 · A2)", () => {
+  renderCards([
     {
       type: "seguro",
       ofertas: [{ id: "o1", aseguradora: "Aseguradora X", producto: "Todo riesgo", primaAnualUsd: 500, coberturaResumen: "Cobertura total", comisionAgenciaUsd: 20 }],
     },
   ]);
   expect(screen.getByTestId("card-seguro").textContent).toContain(formatCop(500));
-  fireEvent.click(screen.getByRole("button", { name: "Ver seguros" }));
-  expect(s.act).toHaveBeenCalledWith("ver_seguros");
+  // Las ofertas ya están en la conversación: el botón solo repetía la misma consulta.
+  expect(screen.queryByRole("button", { name: "Ver seguros" })).toBeNull();
 });
 
 test("handoff y bloqueo", () => {
@@ -163,4 +163,62 @@ test("guion: «Siguiente mensaje del cliente» con ayuda y contador", () => {
   expect(document.getElementById(b.getAttribute("aria-describedby")!)!.textContent).toBe("Simula lo que escribe el cliente");
   fireEvent.click(b);
   expect(nextScript).toHaveBeenCalled();
+});
+
+test("A1 · cotización con paquete: etiqueta «incluido» y «Quitar paquete» en vez de agregarlo otra vez", () => {
+  const s = renderCards([{ type: "cotizacion", quote: { ...quote, id: "q_veh-01_30000_VC-PAS-01_0" } }]);
+  const c = screen.getByTestId("card-cotizacion");
+  expect(within(c).getByText("Paquete de desgaste incluido")).toBeTruthy();
+  expect(within(c).queryByRole("button", { name: "Agregar paquete de desgaste" })).toBeNull();
+  fireEvent.click(within(c).getByRole("button", { name: "Quitar paquete" }));
+  expect(s.act).toHaveBeenCalledWith("rechazar_venta_cruzada");
+});
+
+test("A1 · cotización sin paquete no muestra la etiqueta", () => {
+  renderCards([{ type: "cotizacion", quote: { ...quote, id: "q_veh-01_30000__0" } }]);
+  expect(screen.queryByText("Paquete de desgaste incluido")).toBeNull();
+  expect(screen.getByRole("button", { name: "Agregar paquete de desgaste" })).toBeTruthy();
+});
+
+test("A2 · solo la tarjeta accionable más reciente tiene botones; las anteriores llevan una nota", () => {
+  const mensajes: ChatMessage[] = [
+    { id: "m1", rol: "agente", texto: "a", cards: [{ type: "cotizacion", quote }] },
+    { id: "m2", rol: "agente", texto: "b", cards: [{ type: "cotizacion", quote: { ...quote, id: "q2" } }] },
+  ];
+  render(<OwnerApp session={makeSession({ messages: mensajes })} />);
+  const [vieja, nueva] = screen.getAllByTestId("card-cotizacion");
+  expect(within(vieja).queryAllByRole("button")).toHaveLength(0);
+  expect(within(vieja).getByText(/Cotización anterior/)).toBeTruthy();
+  expect(within(nueva).getAllByRole("button")).toHaveLength(2);
+  expect(within(nueva).queryByText(/Cotización anterior/)).toBeNull();
+});
+
+test("A2 · una reserva más reciente deja la cotización como anterior y viceversa", () => {
+  const mensajes: ChatMessage[] = [
+    { id: "m1", rol: "agente", texto: "a", cards: [{ type: "cotizacion", quote }] },
+    { id: "m2", rol: "agente", texto: "b", cards: [{ type: "reserva", booking }] },
+    { id: "m3", rol: "agente", texto: "c", cards: [{ type: "alternativas", motivo: "x", slots: [] }] },
+  ];
+  render(<OwnerApp session={makeSession({ messages: mensajes })} />);
+  expect(within(screen.getByTestId("card-cotizacion")).queryAllByRole("button")).toHaveLength(0);
+  expect(within(screen.getByTestId("card-reserva")).getByRole("button", { name: "Confirmar reserva" })).toBeTruthy();
+  cleanup();
+  render(<OwnerApp session={makeSession({ messages: [mensajes[1], { ...mensajes[0], id: "m4" }] })} />);
+  const reserva = screen.getByTestId("card-reserva");
+  expect(within(reserva).queryByRole("button", { name: "Confirmar reserva" })).toBeNull();
+  expect(within(reserva).getByText(/Reserva anterior/)).toBeTruthy();
+});
+
+test("el campo de mensaje limita a 1000 caracteres, como el contrato de la API (AgentRequest.message)", () => {
+  render(<OwnerApp session={makeSession()} />);
+  const campo = screen.getByLabelText("Escriba su mensaje") as HTMLInputElement;
+  expect(campo.maxLength).toBe(1000);
+});
+
+test("C · un mensaje del sistema se muestra como nota interna que el cliente no ve", () => {
+  const nota: ChatMessage = { id: "n1", rol: "sistema", texto: "Sin autorización de contacto por WhatsApp: no se envía mensaje.", cards: [] };
+  render(<OwnerApp session={makeSession({ messages: [nota] })} />);
+  const el = screen.getByRole("note");
+  expect(el.textContent).toContain("Nota interna · no se envió nada al cliente");
+  expect(el.textContent).toContain("no se envía mensaje");
 });

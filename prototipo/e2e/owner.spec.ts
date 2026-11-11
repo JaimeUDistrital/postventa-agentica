@@ -9,7 +9,7 @@ test("camino feliz: alerta, cotización en COP y reserva en 1 clic", async ({ pa
   const chat = page.getByTestId("owner-chat");
   await expect(chat.getByTestId("card-cotizacion")).toBeVisible();
   await expect(chat.getByTestId("cotizacion-total")).toContainText("$");
-  await expect(page.getByTestId("mode-badge")).toHaveText(/Modo guiado|IA Gemini activa/);
+  await expect(page.getByTestId("mode-badge")).toHaveText(/Motor: reglas|IA Gemini activa/);
   await expect(page.getByText("Revisó el historial del vehículo")).toBeVisible();
 
   await chat.getByRole("button", { name: "Agendar" }).click();
@@ -51,4 +51,29 @@ test("tres columnas en escritorio, dos en tableta y apilado en móvil", async ({
   chat = await caja("owner-chat");
   bandeja = await caja("advisor-inbox");
   expect(bandeja.y).toBeGreaterThan(chat.y);
+});
+
+test("T20 · E: a 1366×607 la página no se desplaza y cada columna tiene su propio scroll", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 607 });
+  await page.goto("/");
+  await page.getByTestId("scenario-btn-feliz").click();
+  await expect(page.getByTestId("card-cotizacion").first()).toBeVisible();
+  const { alto, ventana } = await page.evaluate(() => ({
+    alto: document.documentElement.scrollHeight,
+    ventana: window.innerHeight,
+  }));
+  expect(alto).toBeLessThanOrEqual(ventana);
+  // La rueda sobre el panel derecho no saca la cabecera de la vista.
+  await page.getByRole("region", { name: "Panel del asesor" }).hover();
+  await page.mouse.wheel(0, 1200);
+  await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
+  for (const col of [
+    page.getByRole("navigation", { name: "Clientes de hoy" }),
+    page.locator("#conversacion"),
+    page.getByRole("region", { name: "Panel del asesor" }),
+  ])
+    expect(await col.evaluate((el) => getComputedStyle(el).overflowY)).toBe("auto");
+  // Sin franja en blanco: la rejilla llega al borde inferior de la ventana.
+  const rejilla = (await page.getByTestId("console-grid").boundingBox())!;
+  expect(Math.abs(rejilla.y + rejilla.height - ventana)).toBeLessThan(2);
 });
