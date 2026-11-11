@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import scenariosData from "@/core/data/scenarios.json";
 import { AgentTurn, type AgentRequest, type HandoffCase, type ScenarioId, type UserAction } from "@/core/contracts";
-import type { ChatMessage, DemoSession } from "@/ui/contracts";
+import type { ChatMessage, ClientSnapshot, DemoSession } from "@/ui/contracts";
 
 const GUIONES: Record<string, string[]> = Object.fromEntries(
   (scenariosData as { id: string; mensajesGuion: string[] }[]).map((s) => [s.id, s.mensajesGuion]),
@@ -21,6 +21,7 @@ export function useDemoSession(): DemoSession {
   const [error, setError] = useState<string | null>(null);
   const [scriptStep, setScriptStep] = useState(0);
   const [accessCodeActive, setAccessCodeActive] = useState(false);
+  const [clients, setClients] = useState<Partial<Record<ScenarioId, ClientSnapshot>>>({});
   const accessCodeRef = useRef<string | null>(null);
   const sessionRef = useRef<{ sessionId: string; stateToken?: string } | null>(null);
 
@@ -56,6 +57,10 @@ export function useDemoSession(): DemoSession {
       const turn = AgentTurn.parse(await res.json());
       s.stateToken = turn.stateToken;
       setTurns((t) => [...t, turn]);
+      setClients((c) => ({
+        ...c,
+        [req.scenarioId]: { state: turn.state, sinPermisoWhatsapp: !turn.memory.proactivo.optInWhatsapp },
+      }));
       setMessages((m) => [
         ...m,
         { id: turn.turnId, rol: "agente", texto: turn.reply.text, cards: turn.reply.cards, turnId: turn.turnId },
@@ -114,6 +119,7 @@ export function useDemoSession(): DemoSession {
     setMessages([]);
     setTurns([]);
     setCases([]);
+    setClients({});
     setError(null);
   }, []);
 
@@ -138,5 +144,6 @@ export function useDemoSession(): DemoSession {
     scriptTotal,
     nextScript,
     accessCodeActive,
+    clients,
   };
 }

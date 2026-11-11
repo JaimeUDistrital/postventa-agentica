@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/* Tokens de la zona del propietario (tema claro). La consola Rayos X usa clases estándar de Tailwind. */
+/* Tokens del tema claro (consola del asesor). El detalle técnico (Rayos X) usa clases estándar de Tailwind. */
 :root {
+  color-scheme: light;
   --background: #f8fafc;
   --foreground: #0f172a;
 }
@@ -20,6 +21,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Evita el zoom por doble toque en controles (checklist de Vercel). */
+button,
+summary,
+a {
+  touch-action: manipulation;
 }
 
 :focus-visible {

@@ -1,26 +1,23 @@
 "use client";
-/** T06 · Bandeja del asesor: casos escalados por el agente. */
+/** T06 · Bandeja del asesor; T19: «Necesita su acción», tema claro y lenguaje sin jerga. */
+import { CircleCheck, Headset, TriangleAlert } from "lucide-react";
 import type { HandoffCase, HandoffReason } from "@/core/contracts";
 import type { AdvisorInboxProps } from "@/ui/contracts";
+import { formatKm } from "@/ui/owner/format";
 
 const MOTIVO: Record<HandoffReason, string> = {
-  sintoma_critico: "Síntoma crítico",
-  sin_stock: "Repuesto sin stock",
-  adversarial: "Intento de manipulación",
+  sintoma_critico: "Riesgo de seguridad en el vehículo",
+  sin_stock: "Falta un repuesto",
+  adversarial: "Posible intento de fraude",
   garantia: "Consulta de garantía",
   cliente_molesto: "Cliente molesto",
 };
 
 const PRIORIDAD: Record<HandoffCase["prioridad"], { label: string; cls: string }> = {
-  alta: { label: "Prioridad alta", cls: "border-red-500 bg-red-900 text-red-100" },
-  media: { label: "Prioridad media", cls: "border-amber-500 bg-amber-900 text-amber-100" },
-  baja: { label: "Prioridad baja", cls: "border-emerald-500 bg-emerald-900 text-emerald-100" },
+  alta: { label: "Prioridad alta · atender ya", cls: "bg-amber-100 text-amber-900 ring-amber-300" },
+  media: { label: "Prioridad media · hoy", cls: "bg-amber-50 text-amber-900 ring-amber-200" },
+  baja: { label: "Prioridad baja", cls: "bg-slate-100 text-slate-700 ring-slate-200" },
 };
-
-/** Fecha determinista (sin zona del navegador): ISO recortado a «YYYY-MM-DD HH:mm». */
-function fmtDate(iso: string): string {
-  return iso.replace("T", " ").slice(0, 16);
-}
 
 function Card({ c, onTake }: { c: HandoffCase; onTake: (id: string) => void }) {
   const p = PRIORIDAD[c.prioridad];
@@ -28,31 +25,38 @@ function Card({ c, onTake }: { c: HandoffCase; onTake: (id: string) => void }) {
   return (
     <article
       data-testid="handoff-card"
-      aria-label={`Caso ${c.id}`}
-      className="space-y-2 rounded-lg border border-slate-700 bg-slate-900 p-3 text-sm text-slate-100"
+      aria-label={`Caso de ${c.contexto.clienteAlias}: ${MOTIVO[c.motivo]}`}
+      className={`space-y-2 rounded-xl border p-3 text-sm ${taken ? "border-slate-200 bg-slate-50" : "border-amber-300 bg-amber-50/60"}`}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`rounded border px-1.5 py-0.5 text-[11px] font-medium ${p.cls}`}>{p.label}</span>
-        <span className="font-semibold">{MOTIVO[c.motivo]}</span>
-        <span className="ml-auto text-xs text-slate-300">
-          {taken ? "Tomado" : "Abierto"} · {fmtDate(c.creadoEn)}
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${p.cls}`}>
+          <TriangleAlert aria-hidden className="size-3.5" />
+          {p.label}
         </span>
+        <span className="font-semibold text-slate-900">{MOTIVO[c.motivo]}</span>
       </div>
-      <p>{c.resumen}</p>
-      <dl className="space-y-0.5 text-xs">
-        <Row k="Cliente" v={c.contexto.clienteAlias} />
-        <Row k="Vehículo" v={c.contexto.vehiculo} />
-        <Row k="Km estimado" v={`${c.contexto.kmEstimado} km`} />
-        <Row k="Síntomas" v={c.contexto.sintomas.length ? c.contexto.sintomas.join(", ") : "ninguno"} />
-        <Row k="Último mensaje" v={c.contexto.ultimoMensaje || "—"} />
+      <p className="font-medium text-slate-900">
+        {c.contexto.clienteAlias} · {c.contexto.vehiculo}
+        <span className="font-normal text-slate-600"> · {formatKm(c.contexto.kmEstimado)}</span>
+      </p>
+      <dl className="space-y-1 text-slate-800">
+        <Row k="Qué pasó" v={c.resumen} />
+        {c.contexto.ultimoMensaje && <Row k="El cliente escribió" v={`“${c.contexto.ultimoMensaje}”`} />}
         <Row k="Siguiente paso sugerido" v={c.siguientePasoSugerido} />
       </dl>
+      {taken ? (
+        <p className="inline-flex min-h-10 items-center gap-1.5 font-semibold text-emerald-800">
+          <CircleCheck aria-hidden className="size-4" />
+          Caso tomado por usted
+        </p>
+      ) : null}
       <button
         type="button"
         disabled={taken}
         onClick={() => onTake(c.id)}
-        className="rounded bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300"
+        className="inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-600"
       >
+        <Headset aria-hidden className="size-4" />
         Tomar caso
       </button>
     </article>
@@ -61,24 +65,39 @@ function Card({ c, onTake }: { c: HandoffCase; onTake: (id: string) => void }) {
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex gap-2">
-      <dt className="shrink-0 text-slate-400">{k}:</dt>
+    <div>
+      <dt className="text-xs font-semibold text-slate-600">{k}</dt>
       <dd className="break-words">{v}</dd>
     </div>
   );
 }
 
 export function AdvisorInbox({ cases, onTake }: AdvisorInboxProps) {
+  const abiertos = cases.filter((c) => c.estado === "abierto").length;
   return (
-    <div data-testid="advisor-inbox" className="min-h-full space-y-3 bg-slate-950 p-4 text-slate-100">
-      <h2 className="text-base font-semibold">Bandeja del asesor</h2>
-      {cases.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-600 p-4 text-sm text-slate-300">
-          Sin casos escalados por ahora. Cuando el agente derive uno, aparecerá aquí.
-        </p>
-      ) : (
-        cases.map((c) => <Card key={c.id} c={c} onTake={onTake} />)
-      )}
-    </div>
+    <section
+      data-testid="advisor-inbox"
+      aria-labelledby="bandeja-titulo"
+      className={`space-y-3 rounded-xl border bg-white p-4 ${abiertos ? "border-amber-300" : "border-slate-200"}`}
+    >
+      <h2 id="bandeja-titulo" className="flex items-center gap-2 text-base font-semibold text-slate-900">
+        Necesita su acción
+        {abiertos > 0 && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold tabular-nums text-amber-900">
+            {abiertos} {abiertos === 1 ? "pendiente" : "pendientes"}
+          </span>
+        )}
+      </h2>
+      <div aria-live="polite" className="space-y-3">
+        {cases.length === 0 ? (
+          <p className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+            <CircleCheck aria-hidden className="size-4 shrink-0 text-emerald-700" />
+            Nada pendiente: el agente lo está resolviendo.
+          </p>
+        ) : (
+          cases.map((c) => <Card key={c.id} c={c} onTake={onTake} />)
+        )}
+      </div>
+    </section>
   );
 }

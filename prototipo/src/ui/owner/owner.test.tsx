@@ -3,9 +3,9 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, expect, test, vi } from "vitest";
 import { trmCopUsd } from "@/core/config";
 import type { ReplyCard } from "@/core/contracts";
-import { SCENARIOS, type ChatMessage, type DemoSession } from "@/ui/contracts";
+import type { ChatMessage, DemoSession } from "@/ui/contracts";
 import { formatCop, formatFechaHora } from "./format";
-import { OwnerApp, ScenarioBar } from "./index";
+import { OwnerApp } from "./index";
 
 afterEach(cleanup);
 
@@ -154,21 +154,13 @@ test("enviar llama a send; error y escribiendo", () => {
   expect(s2.send).toHaveBeenCalledWith("hola");
 });
 
-test("barra de escenarios: selecciona, reinicia y muestra modo", () => {
-  const s = makeSession({ mode: "deterministic" });
-  render(<ScenarioBar session={s} />);
-  for (const sc of SCENARIOS) {
-    fireEvent.click(screen.getByTestId(`scenario-btn-${sc.id}`));
-    expect(s.selectScenario).toHaveBeenLastCalledWith(sc.id);
-  }
-  expect(screen.getByTestId("mode-badge").textContent).toBe("Determinista");
-  fireEvent.click(screen.getByRole("button", { name: "Reiniciar demo" }));
-  expect(s.reset).toHaveBeenCalled();
-});
-
-test("insignia de modo: Gemini y —", () => {
-  const { rerender } = render(<ScenarioBar session={makeSession({ mode: "llm" })} />);
-  expect(screen.getByTestId("mode-badge").textContent).toBe("Gemini");
-  rerender(<ScenarioBar session={makeSession({ mode: null })} />);
-  expect(screen.getByTestId("mode-badge").textContent).toBe("—");
+test("guion: «Siguiente mensaje del cliente» con ayuda y contador", () => {
+  const nextScript = vi.fn();
+  render(<OwnerApp session={makeSession({ scenarioId: "feliz", nextScript, scriptStep: 1, scriptTotal: 3 })} />);
+  const b = screen.getByRole("button", { name: /Siguiente mensaje del cliente/ });
+  expect(b.textContent).toContain("1/3");
+  expect(b.getAttribute("aria-describedby")).toBeTruthy();
+  expect(document.getElementById(b.getAttribute("aria-describedby")!)!.textContent).toBe("Simula lo que escribe el cliente");
+  fireEvent.click(b);
+  expect(nextScript).toHaveBeenCalled();
 });

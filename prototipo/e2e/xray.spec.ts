@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test("escenario feliz llena la traza y la memoria en Rayos X", async ({ page }) => {
+test("escenario feliz llena la traza y la memoria en el detalle técnico plegado", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("xray-console")).toBeHidden();
+  await page.getByText("Ver detalle técnico (para el jurado)").click();
   await expect(page.getByTestId("xray-console")).toContainText("Elija un escenario");
   await page.getByTestId("scenario-btn-feliz").click();
   await expect(page.getByTestId("trace-event").first()).toBeVisible();

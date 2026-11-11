@@ -96,10 +96,10 @@ test("sin_consentimiento: no hay mensaje de contacto ni cotización", async () =
   await within(chat()).findAllByTestId("card-cotizacion");
 });
 
-test("Reiniciar demo limpia el paso del guion", async () => {
+test("Reiniciar limpia el paso del guion", async () => {
   await inicia("feliz");
   await paso();
-  fireEvent.click(screen.getByRole("button", { name: "Reiniciar demo" }));
+  fireEvent.click(screen.getByRole("button", { name: "Reiniciar" }));
   expect(next().textContent).toContain("0/0");
   expect(next().disabled).toBe(true);
 });

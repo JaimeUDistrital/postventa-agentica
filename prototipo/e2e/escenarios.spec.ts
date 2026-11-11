@@ -9,7 +9,12 @@ function vigilaConsola(page: Page) {
 }
 
 const chat = (page: Page) => page.getByTestId("owner-chat");
-const siguiente = (page: Page) => page.getByRole("button", { name: /Siguiente paso del guion/ });
+const siguiente = (page: Page) => page.getByRole("button", { name: /Siguiente mensaje del cliente/ });
+// El detalle técnico (Rayos X) está plegado en un <details>: se abre antes de mirarlo.
+const estadoTecnico = async (page: Page) => {
+  await page.getByText("Ver detalle técnico (para el jurado)").click();
+  return page.getByTestId("state-machine").locator('[aria-current="step"]');
+};
 
 async function paso(page: Page, esperado: string) {
   await siguiente(page).click();
@@ -26,7 +31,8 @@ test("feliz: guion, reserva confirmada y estado CERRADO", async ({ page }) => {
   await expect(chat(page).getByTestId("card-reserva").first()).toBeVisible();
   await chat(page).getByRole("button", { name: "Confirmar reserva" }).last().click();
   await expect(chat(page).getByText("Reserva confirmada").first()).toBeVisible();
-  await expect(page.getByTestId("state-machine").locator('[aria-current="step"]')).toContainText("CERRADO");
+  await expect(page.getByTestId("scenario-btn-feliz")).toContainText("Cita confirmada");
+  await expect(await estadoTecnico(page)).toContainText("CERRADO");
   expect(errores).toEqual([]);
 });
 
@@ -36,6 +42,7 @@ test("sintoma_critico: el caso llega a la Bandeja y el guion se agota", async ({
   await page.getByTestId("scenario-btn-sintoma_critico").click();
   await siguiente(page).click();
   await expect(page.getByTestId("advisor-inbox").getByTestId("handoff-card").first()).toBeVisible();
+  await expect(page.getByTestId("scenario-btn-sintoma_critico")).toContainText("¡Necesita asesor!");
   await expect(siguiente(page)).toBeDisabled();
   expect(errores).toEqual([]);
 });
@@ -59,7 +66,8 @@ test("adversarial: el agente bloquea la manipulación", async ({ page }) => {
   await page.getByTestId("scenario-btn-adversarial").click();
   await siguiente(page).click();
   await expect(chat(page).getByTestId("card-bloqueo").first()).toBeVisible();
-  await expect(page.getByTestId("state-machine").locator('[aria-current="step"]')).toContainText("BLOQUEADO");
+  await expect(page.getByTestId("scenario-btn-adversarial")).toContainText("Bloqueado por seguridad");
+  await expect(await estadoTecnico(page)).toContainText("BLOQUEADO");
   expect(errores).toEqual([]);
 });
 
@@ -72,12 +80,12 @@ test("sin_consentimiento: no se envía mensaje de contacto", async ({ page }) =>
   expect(errores).toEqual([]);
 });
 
-test("Reiniciar demo limpia el chat y el guion", async ({ page }) => {
+test("Reiniciar limpia el chat y el guion", async ({ page }) => {
   await page.goto("/?codigo=prueba");
   await expect(page.getByText("Código del jurado activo")).toBeVisible();
   await page.getByTestId("scenario-btn-feliz").click();
   await siguiente(page).click();
-  await page.getByRole("button", { name: "Reiniciar demo" }).click();
+  await page.getByRole("button", { name: "Reiniciar", exact: true }).click();
   await expect(siguiente(page)).toBeDisabled();
   await expect(siguiente(page)).toContainText("0/0");
 });

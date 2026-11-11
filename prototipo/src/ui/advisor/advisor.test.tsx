@@ -27,14 +27,16 @@ const mk = (id: string, estado: "abierto" | "tomado") =>
 
 test("estado vacío", () => {
   render(<AdvisorInbox cases={[]} onTake={() => {}} />);
-  expect(screen.getByText(/Sin casos escalados/)).toBeTruthy();
+  expect(screen.getByText(/Nada pendiente: el agente lo está resolviendo/)).toBeTruthy();
 });
 
 test("Tomar caso llama a onTake con el id", () => {
   const onTake = vi.fn();
   render(<AdvisorInbox cases={[mk("c1", "abierto")]} onTake={onTake} />);
-  expect(screen.getByText("Prioridad alta")).toBeTruthy();
-  expect(screen.getByText("Síntoma crítico")).toBeTruthy();
+  expect(screen.getByText(/Prioridad alta/)).toBeTruthy();
+  expect(screen.getByText("Riesgo de seguridad en el vehículo")).toBeTruthy();
+  expect(screen.getByText("Llamar al cliente")).toBeTruthy();
+  expect(screen.getByText(/Cliente A · Mazda 3 2022/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Tomar caso" }));
   expect(onTake).toHaveBeenCalledWith("c1");
 });
@@ -46,4 +48,5 @@ test("se deshabilita si el estado no es abierto", () => {
   expect(b.disabled).toBe(true);
   fireEvent.click(b);
   expect(onTake).not.toHaveBeenCalled();
+  expect(screen.getByText("Caso tomado por usted")).toBeTruthy();
 });

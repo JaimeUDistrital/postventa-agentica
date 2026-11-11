@@ -1,15 +1,14 @@
 "use client";
 /** App del propietario: marco de teléfono con chat estilo WhatsApp y tarjetas de respuesta. */
-import { Bot, Send } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Bot, Play, Send } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { OwnerAppProps } from "@/ui/contracts";
 import { ReplyCardView } from "./cards";
-
-export { ScenarioBar } from "./scenario-bar";
 
 export function OwnerApp({ session }: OwnerAppProps) {
   const [texto, setTexto] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
+  const ayudaId = useId();
 
   useEffect(() => {
     const el = scroller.current;
@@ -25,8 +24,8 @@ export function OwnerApp({ session }: OwnerAppProps) {
   };
 
   return (
-    <div data-testid="owner-chat" className="flex h-full items-start justify-center p-3 sm:p-5 lg:items-center">
-      <div className="flex h-[640px] w-full max-w-[400px] flex-col overflow-hidden rounded-[2rem] border-[6px] border-slate-800 bg-slate-100 shadow-xl lg:h-full lg:max-h-[760px]">
+    <div data-testid="owner-chat" className="flex h-full items-start justify-center">
+      <div className="flex h-[640px] w-full max-w-[400px] flex-col overflow-hidden rounded-[2rem] border-[6px] border-slate-800 bg-slate-100 shadow-xl xl:h-full xl:max-h-[760px]">
         <div className="flex items-center gap-3 bg-brand px-4 py-3 text-white">
           <span aria-hidden className="grid size-9 place-items-center rounded-full bg-white/15">
             <Bot className="size-5" />
@@ -39,7 +38,7 @@ export function OwnerApp({ session }: OwnerAppProps) {
 
         <div ref={scroller} role="log" aria-label="Conversación" aria-live="polite" className="flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
           {session.messages.length === 0 && (
-            <p className="mt-8 text-center text-sm text-slate-600">Elija un escenario arriba para iniciar la conversación.</p>
+            <p className="mt-8 text-center text-sm text-slate-600">Elija un cliente de la lista para ver la conversación.</p>
           )}
           {session.messages.map((m) => (
             <div key={m.id} className={`flex flex-col gap-2 ${m.rol === "cliente" ? "items-end" : m.rol === "sistema" ? "items-center" : "items-start"}`}>
@@ -73,6 +72,30 @@ export function OwnerApp({ session }: OwnerAppProps) {
           </p>
         )}
 
+        {session.nextScript && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-200 bg-brand-soft px-2.5 py-2">
+            <button
+              type="button"
+              data-testid="script-next"
+              aria-describedby={ayudaId}
+              onClick={() => session.nextScript?.()}
+              disabled={
+                !session.scenarioId || session.loading || (session.scriptStep ?? 0) >= (session.scriptTotal ?? 0)
+              }
+              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700"
+            >
+              <Play aria-hidden className="size-4" />
+              Siguiente mensaje del cliente
+              <span className="tabular-nums font-normal">
+                ({session.scriptStep ?? 0}/{session.scriptTotal ?? 0})
+              </span>
+            </button>
+            <p id={ayudaId} className="text-xs text-slate-700">
+              Simula lo que escribe el cliente
+            </p>
+          </div>
+        )}
+
         <form onSubmit={enviar} className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-2.5">
           <label className="sr-only" htmlFor="mensaje">
             Escriba su mensaje
@@ -82,22 +105,9 @@ export function OwnerApp({ session }: OwnerAppProps) {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             autoComplete="off"
-            placeholder="Escriba su mensaje"
-            className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-500"
+            placeholder="Escriba como si fuera el cliente…"
+            className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 text-base text-slate-900 sm:text-sm placeholder:text-slate-500"
           />
-          {session.nextScript && (
-            <button
-              type="button"
-              data-testid="script-next"
-              onClick={() => session.nextScript?.()}
-              disabled={
-                !session.scenarioId || session.loading || (session.scriptStep ?? 0) >= (session.scriptTotal ?? 0)
-              }
-              className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-brand/40 bg-white px-3 text-xs font-semibold text-brand hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Siguiente paso del guion ({session.scriptStep ?? 0}/{session.scriptTotal ?? 0})
-            </button>
-          )}
           <button
             type="submit"
             disabled={session.loading}
