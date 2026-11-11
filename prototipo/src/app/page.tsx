@@ -4,12 +4,14 @@
  * y lo que necesita su acción. El detalle técnico (Rayos X) queda plegado para el jurado.
  * T20: en xl la consola ocupa el alto visible y cada columna tiene su propio scroll;
  * la columna central alterna «Conversación» y «Agenda del taller» (pestañas).
+ * T22: aviso del motor de reglas, pestaña «Auditoría» y acciones del asesor en el caso tomado.
  */
 import { ChevronRight } from "lucide-react";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { AdvisorInbox } from "@/ui/advisor";
 import { WorkshopAgenda } from "@/ui/agenda";
-import { AgentActivity, ClientList, ConsoleHeader } from "@/ui/console";
+import { AuditTimeline } from "@/ui/audit";
+import { AgentActivity, ClientList, ConsoleHeader, EngineNotice } from "@/ui/console";
 import { SCENARIOS } from "@/ui/contracts";
 import { useDemoSession } from "@/ui/demo";
 import { OwnerApp } from "@/ui/owner";
@@ -18,6 +20,7 @@ import { XrayConsole } from "@/ui/xray";
 const VISTAS = [
   ["chat", "Conversación"],
   ["agenda", "Agenda del taller"],
+  ["auditoria", "Auditoría"],
 ] as const;
 type Vista = (typeof VISTAS)[number][0];
 const TECLAS: Record<string, (i: number, n: number) => number> = {
@@ -113,6 +116,7 @@ export default function Home() {
               </h2>
               <p className="text-xs text-slate-600">Así lo ve el cliente</p>
             </div>
+            <EngineNotice mode={session.mode} />
             <div className="min-h-0 flex-1">
               <OwnerApp session={session} />
             </div>
@@ -127,11 +131,21 @@ export default function Home() {
           >
             <WorkshopAgenda bookings={session.bookings ?? []} />
           </div>
+
+          <div
+            role="tabpanel"
+            id="panel-auditoria"
+            aria-labelledby="pestana-auditoria"
+            hidden={vista !== "auditoria"}
+            className={vista === "auditoria" ? "min-h-0 flex-1" : "hidden"}
+          >
+            <AuditTimeline scenarioId={session.scenarioId} cliente={cliente} messages={session.messages} turns={session.turns} />
+          </div>
         </section>
 
         <section aria-label="Panel del asesor" className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:p-1">
           <AgentActivity turns={session.turns} cliente={cliente} loading={session.loading} />
-          <AdvisorInbox cases={session.cases} onTake={session.takeCase} />
+          <AdvisorInbox cases={session.cases} onTake={session.takeCase} onReply={session.replyAsAdvisor} onCall={session.logCall} />
           <details className="group rounded-xl border border-slate-200 bg-white">
             <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
               <ChevronRight aria-hidden className="size-4 transition-transform group-open:rotate-90" />

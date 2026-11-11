@@ -22,9 +22,12 @@ La interfaz es una **Consola del asesor**.
 2. Elige uno: se abre la conversación de WhatsApp.
 3. En **Demo guiada** (por defecto), pulsa **Siguiente mensaje del cliente** para avanzar el guion paso a paso; en **Modo libre** escribe como cliente o usa los botones de las tarjetas, como en producción.
 4. Mira **Qué hizo el agente** (acciones y decisiones) y **Necesita su acción** (lo que debe resolver el asesor humano).
-5. **Ver detalle técnico** abre la traza (herramientas, Guardián, memoria).
+5. En **Necesita su acción**, pulsa **Tomar caso**: la IA queda en pausa para ese cliente y puedes **Responder como asesor** o **Registrar llamada**. En el chat se distingue quién habla: cliente, IA, asesor o nota interna.
+6. Junto a la conversación, la pestaña **Agenda del taller** muestra los cupos de cada bahía por día y, resaltadas, las citas hechas en la demo («Reservada» / «Confirmada»).
+7. La pestaña **Auditoría** muestra la línea de tiempo del cliente (quién respondió, la IA o una persona, cuándo y cómo) y permite **Descargar auditoría (JSON)**.
+8. **Ver detalle técnico** abre la traza (herramientas, Guardián, memoria).
 
-Modo Gemini: por defecto la demo corre en modo determinista. Para activar Gemini, abre el enlace con `?codigo=...` que se envía al jurado por correo (el código nunca está en el repo). Sin código válido, la demo sigue funcionando en modo determinista.
+Modo Gemini: la IA (Gemini) atiende a todos los visitantes por defecto, con topes de 20 turnos por sesión y 30 peticiones por minuto por IP. Si Gemini no está disponible, la demo pasa sola al motor de reglas y lo indica con «Motor: reglas». El código del jurado (`?codigo=...`) solo aplica si se activa el interruptor de emergencia ([ADR 0007](docs/adr/0007-ia-para-todos-con-topes.md)).
 
 ## Correr en local
 

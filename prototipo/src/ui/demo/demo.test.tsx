@@ -6,12 +6,15 @@ import { POST } from "@/app/api/agent/route";
 import Home from "@/app/page";
 
 const bodies: Record<string, unknown>[] = [];
+const urlDe = (i: RequestInfo | URL) => (typeof i === "string" ? i : i instanceof URL ? i.href : i.url);
 
 beforeEach(() => {
   bodies.length = 0;
   window.sessionStorage.clear();
   window.history.replaceState({}, "", "/");
-  vi.stubGlobal("fetch", (_input: RequestInfo | URL, init?: RequestInit) => {
+  // Solo la API del agente; cualquier otra llamada (p. ej. a Gemini desde el core) falla como sin red.
+  vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => {
+    if (urlDe(input) !== "/api/agent") return Promise.reject(new Error("sin red en los tests"));
     bodies.push(JSON.parse(String(init?.body)));
     return POST(new Request("http://localhost/api/agent", init));
   });

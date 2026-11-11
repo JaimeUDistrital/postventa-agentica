@@ -1,7 +1,7 @@
 "use client";
 import { CalendarCheck, CircleCheck, Gauge, Headset, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
-import type { ReactNode } from "react";
-import type { PriceQuote, ReplyCard, UserAction } from "@/core/contracts";
+import { useId, type ReactNode } from "react";
+import type { InsuranceOffer, PriceQuote, ReplyCard, UserAction } from "@/core/contracts";
 import { parseQuoteId } from "@/core/tools/quote";
 import { formatCop, formatFechaHora, formatKm, formatUsd } from "./format";
 
@@ -11,7 +11,18 @@ interface Props {
   disabled?: boolean;
   /** T20: ya hay una tarjeta accionable más reciente; esta no ofrece botones (evita bucles). */
   anterior?: boolean;
+  /** T22: envía un mensaje normal del cliente (elegir un seguro). */
+  send?: (texto: string) => void;
+  /** T22: la cotización ofrece «Ver seguros» mientras no haya una tarjeta de seguros en la conversación. */
+  ofrecerSeguros?: boolean;
+  /** T22 · 4b: la tarjeta de seguros ya no admite elección (se eligió una opción o hay otra más reciente). */
+  seguro?: { cerrada: boolean; elegida: number | null };
 }
+
+/** T22 · 4b: texto del mensaje del cliente al elegir la oferta n (1, 2, 3…). */
+export const textoEleccionSeguro = (n: number, o: Pick<InsuranceOffer, "aseguradora" | "producto">): string =>
+  `Quiero la opción ${n}: ${o.aseguradora} · ${o.producto}`;
+export const RE_ELECCION_SEGURO = /^Quiero la opción (\d+):/;
 
 /** Tarjetas con botones de acción: solo la más reciente de la conversación los muestra (T20 · A2). */
 export const TARJETAS_ACCIONABLES: ReadonlySet<ReplyCard["type"]> = new Set(["cotizacion", "reserva"]);
@@ -31,6 +42,8 @@ const btnPrimario =
   "inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60";
 const btnSecundario =
   "inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-brand/40 bg-white px-4 text-sm font-semibold text-brand hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-60";
+const btnTerciario =
+  "inline-flex min-h-10 w-full items-center justify-center rounded-lg px-4 text-sm font-semibold text-brand underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60";
 
 function Titulo({ icono, children }: { icono: ReactNode; children: ReactNode }) {
   return (
@@ -43,7 +56,7 @@ function Titulo({ icono, children }: { icono: ReactNode; children: ReactNode }) 
   );
 }
 
-export function ReplyCardView({ card, act, disabled, anterior = false }: Props) {
+export function ReplyCardView({ card, act, disabled, anterior = false, send, ofrecerSeguros = false, seguro }: Props) {
   switch (card.type) {
     case "alerta_km":
       return (
@@ -116,6 +129,11 @@ export function ReplyCardView({ card, act, disabled, anterior = false }: Props) 
                   Agregar paquete de desgaste
                 </button>
               )}
+              {ofrecerSeguros && (
+                <button type="button" disabled={disabled} onClick={() => act("ver_seguros")} className={btnTerciario}>
+                  Ver seguros
+                </button>
+              )}
             </div>
           )}
         </article>
@@ -160,22 +178,12 @@ export function ReplyCardView({ card, act, disabled, anterior = false }: Props) 
       );
     case "seguro":
       return (
-        <article aria-label="Seguros" data-testid="card-seguro" className={base + " border-slate-200"}>
-          <Titulo icono={<ShieldCheck className="size-4" />}>Seguros para su vehículo</Titulo>
-          <ul className="space-y-2">
-            {card.ofertas.map((o) => (
-              <li key={o.id} className="rounded-lg bg-slate-50 px-3 py-2">
-                <div className="flex justify-between gap-3">
-                  <span className="font-medium text-slate-900">
-                    {o.aseguradora} · {o.producto}
-                  </span>
-                  <span className="shrink-0 tabular-nums font-semibold text-brand">{formatCop(o.primaAnualUsd)}/año</span>
-                </div>
-                <p className="text-xs text-slate-600">{o.coberturaResumen}</p>
-              </li>
-            ))}
-          </ul>
-        </article>
+        <SeguroCard
+          ofertas={card.ofertas}
+          send={send}
+          disabled={disabled || !!seguro?.cerrada}
+          elegida={seguro?.elegida ?? null}
+        />
       );
     case "handoff":
       return (
@@ -193,6 +201,65 @@ export function ReplyCardView({ card, act, disabled, anterior = false }: Props) 
         </article>
       );
   }
+}
+
+/** T22 · 4b: ofertas numeradas; nunca se muestra `comisionAgenciaUsd` (es interna de la agencia). */
+function SeguroCard({
+  ofertas,
+  send,
+  disabled,
+  elegida,
+}: {
+  ofertas: InsuranceOffer[];
+  send?: (texto: string) => void;
+  disabled?: boolean;
+  elegida: number | null;
+}) {
+  const idBase = useId();
+  return (
+    <article aria-label="Seguros" data-testid="card-seguro" className={base + " border-slate-200"}>
+      <Titulo icono={<ShieldCheck className="size-4" />}>Seguros para su vehículo</Titulo>
+      <ol className="space-y-2">
+        {ofertas.map((o, i) => {
+          const n = i + 1;
+          const id = `${idBase}-${n}`;
+          return (
+            <li key={o.id} className="flex gap-2.5 rounded-lg bg-slate-50 px-3 py-2">
+              <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-white">
+                {n}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex justify-between gap-3">
+                  <span id={id} className="font-medium text-slate-900">
+                    {o.aseguradora} · {o.producto}
+                  </span>
+                  <span className="shrink-0 tabular-nums font-semibold text-brand">{formatCop(o.primaAnualUsd)}/año</span>
+                </div>
+                <p className="text-xs text-slate-600">{o.coberturaResumen}</p>
+                {elegida === n && (
+                  <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-800">
+                    <CircleCheck aria-hidden className="size-3.5" />
+                    Elegida
+                  </p>
+                )}
+                {send && (
+                  <button
+                    type="button"
+                    aria-describedby={id}
+                    disabled={disabled}
+                    onClick={() => send(textoEleccionSeguro(n, o))}
+                    className={btnSecundario + " mt-2"}
+                  >
+                    Elegir este seguro
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </article>
+  );
 }
 
 function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {

@@ -7,6 +7,7 @@ import {
   Clock,
   MessageCircle,
   ShieldAlert,
+  ShieldCheck,
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const ESTILO: Record<EstadoCliente, { icono: LucideIcon; cls: string }> = {
   necesita_asesor: { icono: TriangleAlert, cls: "bg-amber-100 text-amber-900" },
   bloqueado: { icono: ShieldAlert, cls: "bg-red-50 text-red-800" },
   sin_permiso: { icono: Ban, cls: "bg-slate-100 text-slate-700" },
+  seguro_elegido: { icono: ShieldCheck, cls: "bg-brand-soft text-brand" },
 };
 
 export function EstadoChip({ estado }: { estado: EstadoCliente }) {

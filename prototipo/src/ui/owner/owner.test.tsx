@@ -189,7 +189,8 @@ test("A2 · solo la tarjeta accionable más reciente tiene botones; las anterior
   const [vieja, nueva] = screen.getAllByTestId("card-cotizacion");
   expect(within(vieja).queryAllByRole("button")).toHaveLength(0);
   expect(within(vieja).getByText(/Cotización anterior/)).toBeTruthy();
-  expect(within(nueva).getAllByRole("button")).toHaveLength(2);
+  // T22: además de Agendar y el paquete, ofrece «Ver seguros» (aún no hay tarjeta de seguros).
+  expect(within(nueva).getAllByRole("button").map((b) => b.textContent)).toEqual(["Agendar", "Agregar paquete de desgaste", "Ver seguros"]);
   expect(within(nueva).queryByText(/Cotización anterior/)).toBeNull();
 });
 
@@ -221,4 +222,84 @@ test("C · un mensaje del sistema se muestra como nota interna que el cliente no
   const el = screen.getByRole("note");
   expect(el.textContent).toContain("Nota interna · no se envió nada al cliente");
   expect(el.textContent).toContain("no se envía mensaje");
+});
+
+const ofertas = [
+  { id: "o1", aseguradora: "Aseguradora X", producto: "Todo riesgo" as const, primaAnualUsd: 500, coberturaResumen: "Cobertura total", comisionAgenciaUsd: 20 },
+  { id: "o2", aseguradora: "Aseguradora Y", producto: "SOAT" as const, primaAnualUsd: 120, coberturaResumen: "Obligatorio", comisionAgenciaUsd: 7 },
+];
+
+test("T22 · 3 · autores distinguibles: cliente, IA, asesor y sistema", () => {
+  const mensajes: ChatMessage[] = [
+    { id: "a", rol: "agente", texto: "Hola, soy el asistente", cards: [] },
+    { id: "c", rol: "cliente", texto: "Huele a quemado", cards: [] },
+    { id: "t", rol: "sistema", texto: "Carlos R. (asesor) tomó el caso · 10:32", cards: [], evento: "toma" },
+    { id: "h", rol: "asesor", texto: "Hola, soy Carlos", cards: [], autor: "Carlos R." },
+    { id: "l", rol: "asesor", texto: "Llamada del asesor · Contestó · Va en grúa", cards: [], autor: "Carlos R.", evento: "llamada" },
+  ];
+  render(<OwnerApp session={makeSession({ messages: mensajes })} />);
+  const autor = (a: string) => document.querySelectorAll(`[data-autor="${a}"]`);
+  expect(autor("ia")).toHaveLength(1);
+  expect(within(autor("ia")[0] as HTMLElement).getByTestId("autor-ia").textContent).toBe("IA");
+  expect(autor("cliente")[0].textContent).toContain("Huele a quemado");
+  const asesor = screen.getByTestId("mensaje-asesor");
+  expect(asesor.textContent).toContain("Asesor · Carlos R.");
+  expect(asesor.textContent).toContain("Hola, soy Carlos");
+  expect(screen.getAllByTestId("mensaje-asesor")).toHaveLength(1);
+  // la llamada es un evento, no una burbuja
+  expect(screen.getByTestId("evento-llamada").textContent).toContain("Llamada del asesor · Contestó · Va en grúa");
+  const toma = screen.getByRole("note");
+  expect(toma.textContent).toContain("Nota interna · el cliente no la ve");
+  expect(toma.textContent).toContain("Carlos R. (asesor) tomó el caso · 10:32");
+});
+
+test("T22 · 1 · con la IA en pausa: «Le atiende Carlos R. (asesor)» y botones de tarjetas deshabilitados", () => {
+  renderCards([{ type: "cotizacion", quote }], { aiPaused: true });
+  expect(screen.getByText("Le atiende Carlos R. (asesor)")).toBeTruthy();
+  expect((screen.getByRole("button", { name: "Agendar" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+test("T22 · 4b · seguros numerados; «Elegir este seguro» envía un mensaje normal y nunca muestra la comisión", () => {
+  const s = renderCards([{ type: "seguro", ofertas }]);
+  const card = screen.getByTestId("card-seguro");
+  const items = within(card).getAllByRole("listitem");
+  expect(items.map((li) => li.textContent?.trim().charAt(0))).toEqual(["1", "2"]);
+  expect(card.textContent).not.toMatch(/comisi/i);
+  expect(card.textContent).not.toContain(formatCop(20));
+  expect(card.textContent).not.toContain(formatCop(7));
+  const botones = within(card).getAllByRole("button", { name: "Elegir este seguro" });
+  expect(botones).toHaveLength(2);
+  fireEvent.click(botones[1]);
+  expect(s.send).toHaveBeenCalledWith("Quiero la opción 2: Aseguradora Y · SOAT");
+  expect(s.act).not.toHaveBeenCalled();
+});
+
+test("T22 · 4b · después de elegir, los botones de esa tarjeta quedan deshabilitados y se marca la opción", () => {
+  const mensajes: ChatMessage[] = [
+    { id: "m1", rol: "agente", texto: "Opciones", cards: [{ type: "seguro", ofertas }] },
+    { id: "m2", rol: "cliente", texto: "Quiero la opción 1: Aseguradora X · Todo riesgo", cards: [] },
+  ];
+  render(<OwnerApp session={makeSession({ messages: mensajes })} />);
+  const card = screen.getByTestId("card-seguro");
+  for (const b of within(card).getAllByRole("button", { name: "Elegir este seguro" })) expect((b as HTMLButtonElement).disabled).toBe(true);
+  expect(within(within(card).getAllByRole("listitem")[0]).getByText("Elegida")).toBeTruthy();
+});
+
+test("T22 · «Ver seguros» en la cotización solo mientras no haya una tarjeta de seguros", () => {
+  const s = renderCards([{ type: "cotizacion", quote }]);
+  fireEvent.click(screen.getByRole("button", { name: "Ver seguros" }));
+  expect(s.act).toHaveBeenCalledWith("ver_seguros");
+  cleanup();
+  render(
+    <OwnerApp
+      session={makeSession({
+        messages: [
+          { id: "m1", rol: "agente", texto: "a", cards: [{ type: "seguro", ofertas }] },
+          { id: "m2", rol: "agente", texto: "b", cards: [{ type: "cotizacion", quote }] },
+        ],
+      })}
+    />,
+  );
+  expect(screen.queryByRole("button", { name: "Ver seguros" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Agendar" })).toBeTruthy();
 });

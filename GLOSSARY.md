@@ -38,6 +38,11 @@ Términos del dominio automotriz y del producto, tal como se usan en este repo.
 - **Demo guiada**: modo de uso por defecto de la consola: muestra los 3 pasos y el botón «Siguiente mensaje del cliente», que envía el guion del escenario.
 - **Modo libre**: modo de uso como en producción: sin guion ni pasos; se escribe como cliente o se usan los botones de las tarjetas. Cambiar de modo no borra las conversaciones.
 - **Agenda del taller**: pestaña de la consola con los cupos de cada bahía por día («Libre» / «Ocupado») y, resaltadas, las citas hechas en la demo con su estado («Reservada» / «Confirmada»).
+- **Aviso del motor de reglas**: nota plegable en la columna de la conversación que aparece cuando el turno usó el motor de reglas (respaldo si la IA no está disponible); explica que el agente solo entiende intenciones conocidas y pasa a un asesor lo que no entiende.
+- **Toma de caso**: el asesor pulsa «Tomar caso» en «Necesita su acción»; el caso queda «tomado», la conversación muestra una nota interna con su nombre y la hora, y la IA queda en pausa para ese cliente (lo que escribe el cliente no se envía al agente). Desde el caso puede responder por WhatsApp o registrar una llamada.
+- **Auditoría de conversación**: línea de tiempo de un cliente con la hora y el autor de cada mensaje (IA, asesor, cliente o sistema); para la IA, el motor (reglas o Gemini), las herramientas llamadas y el veredicto del Guardián; para el asesor, la marca «humano» y su nombre. Se puede descargar en JSON.
+- **Caso de venta de seguro**: caso con motivo `seguro`; lo abre el agente cuando el cliente elige una oferta («la 1», «quiero la opción 2» o el botón «Elegir este seguro»). Lo atiende un asesor certificado, que valida los datos y emite la póliza. No bloquea la conversación: el cliente puede seguir y agendar.
+- **No resuelto**: caso con motivo `no_resuelto`. La 1.ª vez que el motor de reglas no entiende un mensaje, ofrece opciones y «escriba asesor»; la 2.ª vez seguida, pasa el caso a un humano. También se usa cuando el cliente pide cambiar o cancelar una cita ya confirmada.
 - **Token de sesión**: estado firmado (HMAC) que viaja con cada turno; no hay base de datos.
 - **Evals**: casos con criterios pasa/no pasa para medir al agente.
 

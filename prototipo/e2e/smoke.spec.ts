@@ -25,6 +25,10 @@ test("las 3 zonas cargan y un escenario genera traza sin errores de consola", as
 
   await page.getByRole("tab", { name: /Agenda del taller/ }).click();
   await expect(page.getByTestId("workshop-agenda")).toBeVisible();
+  // T22: pestaña de auditoría con la línea de tiempo del cliente.
+  await page.getByRole("tab", { name: /Auditoría/ }).click();
+  await expect(page.getByTestId("audit-timeline")).toBeVisible();
+  await expect(page.getByTestId("auditoria-entrada").first()).toBeVisible();
   await page.getByRole("tab", { name: /Conversación/ }).click();
   await expect(page.getByTestId("owner-chat")).toBeVisible();
   // Captura para revisión visual (el agente la abre con Read).

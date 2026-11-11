@@ -1,8 +1,9 @@
 "use client";
-/** T06 · Bandeja del asesor; T19: «Necesita su acción», tema claro y lenguaje sin jerga. */
-import { CircleCheck, Headset, TriangleAlert } from "lucide-react";
+/** T06 · Bandeja del asesor; T19: «Necesita su acción», tema claro y lenguaje sin jerga. T22: responder y llamar. */
+import { CircleCheck, Headset, Phone, Send, TriangleAlert } from "lucide-react";
+import { useId, useState } from "react";
 import type { HandoffCase, HandoffReason } from "@/core/contracts";
-import type { AdvisorInboxProps } from "@/ui/contracts";
+import { ASESOR_DEMO, RESULTADO_LLAMADA_LABEL, type AdvisorInboxProps, type ResultadoLlamada } from "@/ui/contracts";
 import { formatKm } from "@/ui/owner/format";
 
 const MOTIVO: Record<HandoffReason, string> = {
@@ -30,7 +31,105 @@ export function ordenarCasos(cases: HandoffCase[]): HandoffCase[] {
   );
 }
 
-function Card({ c, onTake }: { c: HandoffCase; onTake: (id: string) => void }) {
+const MAX_RESPUESTA = 1000;
+const MAX_NOTA_LLAMADA = 200;
+const RESULTADOS = Object.keys(RESULTADO_LLAMADA_LABEL) as ResultadoLlamada[];
+const campo =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 sm:text-sm placeholder:text-slate-500";
+const btnAccion =
+  "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-brand/40 bg-white px-4 text-sm font-semibold text-brand hover:bg-brand-soft";
+
+/** T22 · 2: lo que el asesor hace en un caso tomado (todo queda en la conversación del cliente). */
+function AccionesAsesor({ id, onReply, onCall }: { id: string } & Pick<AdvisorInboxProps, "onReply" | "onCall">) {
+  const uid = useId();
+  const [respuesta, setRespuesta] = useState("");
+  const [resultado, setResultado] = useState<ResultadoLlamada>("contesto");
+  const [nota, setNota] = useState("");
+  const [aviso, setAviso] = useState("");
+
+  const responder = (e: React.FormEvent) => {
+    e.preventDefault();
+    const t = respuesta.trim();
+    if (!t || !onReply) return;
+    onReply(id, t);
+    setRespuesta("");
+    setAviso("Respuesta enviada al cliente.");
+  };
+  const registrar = (e: React.FormEvent) => {
+    e.preventDefault();
+    onCall?.(id, resultado, nota.trim());
+    setNota("");
+    setAviso("Llamada registrada en la conversación.");
+  };
+
+  return (
+    <div className="space-y-3 border-t border-slate-200 pt-3">
+      {onReply && (
+        <form onSubmit={responder} className="space-y-1.5">
+          <label htmlFor={`${uid}-respuesta`} className="block text-xs font-semibold text-slate-700">
+            Responder como asesor
+          </label>
+          <textarea
+            id={`${uid}-respuesta`}
+            value={respuesta}
+            onChange={(e) => setRespuesta(e.target.value)}
+            maxLength={MAX_RESPUESTA}
+            rows={2}
+            placeholder={`Escriba como ${ASESOR_DEMO}…`}
+            className={campo}
+          />
+          <button type="submit" className={btnAccion}>
+            <Send aria-hidden className="size-4" />
+            Enviar respuesta
+          </button>
+        </form>
+      )}
+      {onCall && (
+        <form onSubmit={registrar} className="space-y-1.5">
+          <fieldset>
+            <legend className="text-xs font-semibold text-slate-700">Resultado de la llamada</legend>
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+              {RESULTADOS.map((r) => (
+                <label key={r} className="inline-flex min-h-10 items-center gap-1.5 text-sm text-slate-800">
+                  <input
+                    type="radio"
+                    name={`${uid}-resultado`}
+                    value={r}
+                    checked={resultado === r}
+                    onChange={() => setResultado(r)}
+                    className="size-4 accent-brand"
+                  />
+                  {RESULTADO_LLAMADA_LABEL[r]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <label htmlFor={`${uid}-nota`} className="block text-xs font-semibold text-slate-700">
+            Nota de la llamada
+          </label>
+          <input
+            id={`${uid}-nota`}
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            maxLength={MAX_NOTA_LLAMADA}
+            autoComplete="off"
+            placeholder="Opcional, p. ej. «Lo llevan en grúa»"
+            className={campo}
+          />
+          <button type="submit" className={btnAccion}>
+            <Phone aria-hidden className="size-4" />
+            Registrar llamada
+          </button>
+        </form>
+      )}
+      <p role="status" className="text-xs text-emerald-800">
+        {aviso}
+      </p>
+    </div>
+  );
+}
+
+function Card({ c, onTake, onReply, onCall }: { c: HandoffCase } & Pick<AdvisorInboxProps, "onTake" | "onReply" | "onCall">) {
   const p = PRIORIDAD[c.prioridad];
   const taken = c.estado !== "abierto";
   return (
@@ -70,6 +169,7 @@ function Card({ c, onTake }: { c: HandoffCase; onTake: (id: string) => void }) {
         <Headset aria-hidden className="size-4" />
         Tomar caso
       </button>
+      {taken && (onReply || onCall) && <AccionesAsesor id={c.id} onReply={onReply} onCall={onCall} />}
     </article>
   );
 }
@@ -83,7 +183,7 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
-export function AdvisorInbox({ cases, onTake }: AdvisorInboxProps) {
+export function AdvisorInbox({ cases, onTake, onReply, onCall }: AdvisorInboxProps) {
   const abiertos = cases.filter((c) => c.estado === "abierto").length;
   return (
     <section
@@ -106,7 +206,7 @@ export function AdvisorInbox({ cases, onTake }: AdvisorInboxProps) {
             Nada pendiente: el agente lo está resolviendo.
           </p>
         ) : (
-          ordenarCasos(cases).map((c) => <Card key={c.id} c={c} onTake={onTake} />)
+          ordenarCasos(cases).map((c) => <Card key={c.id} c={c} onTake={onTake} onReply={onReply} onCall={onCall} />)
         )}
       </div>
     </section>

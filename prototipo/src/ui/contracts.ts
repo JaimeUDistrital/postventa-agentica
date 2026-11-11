@@ -6,11 +6,29 @@ import type { AgentState, AgentTurn, Booking, HandoffCase, ReplyCard, ScenarioId
 
 export interface ChatMessage {
   id: string;
-  rol: "cliente" | "agente" | "sistema";
+  /** T22: «asesor» = una persona de la agencia (no la IA). */
+  rol: "cliente" | "agente" | "asesor" | "sistema";
   texto: string;
   cards: ReplyCard[];
   turnId?: string;
+  /** T22: hora ISO en que entró en la conversación (para la auditoría). */
+  ts?: string;
+  /** T22: nombre de la persona que lo escribió (rol «asesor»). */
+  autor?: string;
+  /** T22: notas del sistema (consentimiento, toma de caso, IA en pausa) y llamadas del asesor. */
+  evento?: "consentimiento" | "toma" | "pausa" | "llamada";
 }
+
+/** T22: asesor ficticio de la demo (único sitio donde se define). */
+export const ASESOR_DEMO = "Carlos R.";
+
+/** T22: resultado de una llamada del asesor al cliente. */
+export type ResultadoLlamada = "contesto" | "no_contesto" | "llamar_luego";
+export const RESULTADO_LLAMADA_LABEL: Record<ResultadoLlamada, string> = {
+  contesto: "Contestó",
+  no_contesto: "No contestó",
+  llamar_luego: "Pidió que lo llamen luego",
+};
 
 /** T20: «Demo guiada» (guion y pasos para el jurado) o «Modo libre» (como en producción). */
 export type DemoMode = "guiada" | "libre";
@@ -42,6 +60,12 @@ export interface DemoSession {
   setDemoMode?(modo: DemoMode): void;
   /** T20 (aditivo): reservas hechas en esta demo (tarjetas «reserva» de cualquier cliente), para la agenda. */
   bookings?: DemoBooking[];
+  /** T22 (aditivo): un asesor tomó el caso del cliente elegido; la IA no responde a ese cliente. */
+  aiPaused?: boolean;
+  /** T22: respuesta escrita por el asesor en la conversación del cliente del caso. */
+  replyAsAdvisor?(caseId: string, texto: string): void;
+  /** T22: llamada del asesor al cliente del caso (evento en la conversación, no burbuja). */
+  logCall?(caseId: string, resultado: ResultadoLlamada, nota: string): void;
 }
 
 /** T20: una reserva de la demo y el cliente (escenario) que la hizo. */
@@ -55,6 +79,8 @@ export interface ClientSnapshot {
   state: AgentState;
   /** El cliente no autorizó contacto por WhatsApp (memoria del agente Proactivo). */
   sinPermisoWhatsapp: boolean;
+  /** T22: eligió un seguro y hay un caso «seguro» para un asesor certificado (no bloquea la conversación). */
+  seguroElegido?: boolean;
 }
 
 export interface OwnerAppProps {
@@ -68,6 +94,9 @@ export interface XrayConsoleProps {
 export interface AdvisorInboxProps {
   cases: HandoffCase[];
   onTake(id: string): void;
+  /** T22: acciones del asesor en un caso tomado. */
+  onReply?(id: string, texto: string): void;
+  onCall?(id: string, resultado: ResultadoLlamada, nota: string): void;
 }
 
 /**

@@ -37,3 +37,11 @@ export const formatHora = con(hora);
 export function formatFechaHora(iso: string): string {
   return aFecha(iso) ? `${formatDia(iso)}, ${formatHora(iso)}` : iso;
 }
+
+const reloj = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/Bogota" });
+
+/** T22: instante ISO con zona (p. ej. de `new Date().toISOString()`) → "HH:MM" en hora de Colombia. */
+export function formatHoraReloj(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : reloj.format(d);
+}

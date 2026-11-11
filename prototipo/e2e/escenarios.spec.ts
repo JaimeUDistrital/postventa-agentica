@@ -150,3 +150,30 @@ test("T20 · G: la reserva aparece en la «Agenda del taller» con su estado", a
   await expect(cita).toContainText("Confirmada");
   expect(errores).toEqual([]);
 });
+
+test("T22: el asesor toma el caso crítico, responde y queda en la Auditoría como humano", async ({ page }) => {
+  const errores = vigilaConsola(page);
+  await page.goto("/");
+  await page.getByTestId("scenario-btn-sintoma_critico").click();
+  await siguiente(page).click();
+  const bandeja = page.getByTestId("advisor-inbox");
+  await expect(bandeja.getByTestId("handoff-card").first()).toBeVisible();
+  await bandeja.getByRole("button", { name: "Tomar caso" }).click();
+  await expect(chat(page).getByText(/Carlos R\. \(asesor\) tomó el caso · \d{2}:\d{2}/)).toBeVisible();
+
+  await bandeja.getByLabel("Responder como asesor").fill("Hola Andrés, soy Carlos. Le llamo ya.");
+  await bandeja.getByRole("button", { name: "Enviar respuesta" }).click();
+  const respuesta = chat(page).getByTestId("mensaje-asesor");
+  await expect(respuesta).toContainText("Asesor · Carlos R.");
+  await expect(respuesta).toContainText("Hola Andrés, soy Carlos. Le llamo ya.");
+  // con el asesor a cargo, la IA no responde
+  await page.getByLabel("Escriba su mensaje").fill("¿Ya viene la grúa?");
+  await page.getByRole("button", { name: "Enviar mensaje" }).click();
+  await expect(chat(page).getByText("La IA está en pausa: le atiende un asesor")).toBeVisible();
+
+  await page.getByRole("tab", { name: /Auditoría/ }).click();
+  const entradas = page.getByTestId("auditoria-entrada");
+  await expect(entradas.first()).toHaveAttribute("data-autor", "IA");
+  await expect(entradas.filter({ hasText: "humano · Carlos R." }).first()).toContainText("Hola Andrés, soy Carlos. Le llamo ya.");
+  expect(errores).toEqual([]);
+});

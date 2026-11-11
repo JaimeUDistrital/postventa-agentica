@@ -26,6 +26,10 @@ export interface Actividad {
 
 type Frase = { texto: string; resultado: Resultado } | null;
 
+/** T22: el caso «seguro» (venta para un asesor certificado) no es una escalada que bloquee. */
+const VENTA_SEGURO: Frase = { texto: "Pasó la venta del seguro a un asesor certificado", resultado: "listo" };
+const esSeguro = (e: TraceEvent) => e.payload.motivo === "seguro";
+
 function herramienta(e: TraceEvent, turn: AgentTurn): Frase {
   switch (e.name) {
     case "consultar_contexto_vehiculo":
@@ -47,7 +51,7 @@ function herramienta(e: TraceEvent, turn: AgentTurn): Frase {
     case "cotizar_aliados_seguros":
       return { texto: "Buscó seguros con las aseguradoras aliadas", resultado: "listo" };
     case "escalar_asesor_humano":
-      return { texto: "Le pasó el caso a un asesor", resultado: "asesor" };
+      return esSeguro(e) ? VENTA_SEGURO : { texto: "Le pasó el caso a un asesor", resultado: "asesor" };
     default:
       return { texto: "Consultó un sistema de la agencia", resultado: "listo" };
   }
@@ -59,7 +63,7 @@ export function describirEvento(e: TraceEvent, turn: AgentTurn): Frase {
     case "tool_result":
       return herramienta(e, turn);
     case "handoff":
-      return { texto: "Le pasó el caso a un asesor", resultado: "asesor" };
+      return esSeguro(e) ? VENTA_SEGURO : { texto: "Le pasó el caso a un asesor", resultado: "asesor" };
     case "guardrail":
       if (e.status === "blocked") return { texto: "Bloqueó un intento de manipulación", resultado: "bloqueado" };
       if (e.status === "escalated") return { texto: "Detectó un riesgo de seguridad", resultado: "asesor" };

@@ -7,14 +7,17 @@ import Home from "@/app/page";
 import type { AgentTurn, TraceEvent } from "@/core/contracts";
 import { resumirActividad } from "./activity";
 import { modoLabel } from "./header";
-import { estadoCliente } from "./status";
+import { ESTADO_CLIENTE_LABEL, estadoCliente } from "./status";
 
 beforeEach(() => {
   window.sessionStorage.clear();
   window.localStorage.clear();
   window.history.replaceState({}, "", "/");
-  vi.stubGlobal("fetch", (_input: RequestInfo | URL, init?: RequestInit) =>
-    POST(new Request("http://localhost/api/agent", init)),
+  // Solo la API del agente; cualquier otra llamada (p. ej. a Gemini desde el core) falla como sin red.
+  vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) =>
+    (typeof input === "string" ? input : input instanceof URL ? input.href : input.url) === "/api/agent"
+      ? POST(new Request("http://localhost/api/agent", init))
+      : Promise.reject(new Error("sin red en los tests")),
   );
 });
 
@@ -287,6 +290,28 @@ describe("funciones puras", () => {
     expect(estadoCliente({ state: "CERRADO", sinPermisoWhatsapp: false })).toBe("cita_confirmada");
     expect(estadoCliente({ state: "HANDOFF", sinPermisoWhatsapp: false })).toBe("necesita_asesor");
     expect(estadoCliente({ state: "BLOQUEADO", sinPermisoWhatsapp: false })).toBe("bloqueado");
+  });
+
+  test("T22 · seguro elegido: etiqueta propia, sin pasar por «¡Necesita asesor!»; la cita y el handoff mandan", () => {
+    expect(estadoCliente({ state: "COTIZACION", sinPermisoWhatsapp: false, seguroElegido: true })).toBe("seguro_elegido");
+    expect(ESTADO_CLIENTE_LABEL.seguro_elegido).toBe("Seguro elegido · asesor contactará");
+    expect(estadoCliente({ state: "CONFIRMACION", sinPermisoWhatsapp: false, seguroElegido: true })).toBe("cita_apartada");
+    expect(estadoCliente({ state: "CERRADO", sinPermisoWhatsapp: false, seguroElegido: true })).toBe("cita_confirmada");
+    expect(estadoCliente({ state: "HANDOFF", sinPermisoWhatsapp: false, seguroElegido: true })).toBe("necesita_asesor");
+  });
+
+  test("T22 · «Qué hizo el agente»: el caso de seguro se cuenta como venta pasada a un asesor certificado", () => {
+    const ev = (id: string, o: Partial<TraceEvent>): TraceEvent => ({
+      id, ts: "2026-11-11T10:00:00.000Z", kind: "handoff", agent: "Copiloto", name: "handoff_asesor",
+      system: "CRM", payload: { motivo: "seguro" }, latencyMs: 1, status: "escalated", ...o,
+    });
+    const turn = { state: "COTIZACION", mode: "deterministic", trace: [
+      ev("a", { kind: "tool_result", name: "escalar_asesor_humano" }),
+      ev("b", {}),
+    ] } as unknown as AgentTurn;
+    expect(resumirActividad([turn]).map((i) => [i.texto, i.resultado])).toEqual([
+      ["Pasó la venta del seguro a un asesor certificado", "listo"],
+    ]);
   });
 
   test("resumirActividad agrupa repeticiones y omite eventos irrelevantes", () => {
