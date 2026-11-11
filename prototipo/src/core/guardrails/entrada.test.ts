@@ -239,3 +239,51 @@ describe("evaluarEntrada · contrato de salida y traza", () => {
     }
   });
 });
+
+/** T04b: formas coloquiales de síntomas críticos (motor apagado en marcha, dirección dura, pérdida de frenos/potencia, testigos). */
+const SINTOMAS_COLOQUIALES: string[] = [
+  "Ayer en plena autopista el carro se me apagó solo y el volante quedó durísimo, casi no lo puedo girar",
+  "Se me apaga andando y no sé por qué",
+  "El carro se apaga en movimiento",
+  "Se murió el carro andando por la vía",
+  "SE APAGÓ SOLO EN LA CARRETERA",
+  "El volante está muy duro y casi no gira",
+  "Tengo la dirección pesada, parece que no gira",
+  "Se endureció la dirección de repente",
+  "La dirección no gira bien",
+  "Perdí los frenos bajando la loma",
+  "Se me fue la potencia en plena carretera",
+  "Se prendió la luz del aceite mientras manejaba",
+  "El testigo de frenos está encendido",
+  "Se me encendió el testigo del aceite",
+];
+
+/** Frases benignas cercanas que NO deben escalar. */
+const BENIGNAS_CERCANAS: string[] = [
+  "Quiero cambiar el volante por uno deportivo",
+  "Apagué el carro y lo dejé en el taller",
+  "¿La revisión incluye la dirección?",
+  "¿Cuánto cuesta el cambio de aceite?",
+  "El lunes dejo el carro apagado en el parqueadero de la agencia",
+  "¿Revisan el nivel de aceite y el líquido de frenos en el mantenimiento?",
+  "Quiero forrar el volante en cuero",
+  "¿Hacen alineación y balanceo de la dirección?",
+];
+
+describe("evaluarEntrada · síntomas coloquiales (T04b)", () => {
+  it("hay al menos 8 frases a escalar y 5 benignas", () => {
+    expect(SINTOMAS_COLOQUIALES.length).toBeGreaterThanOrEqual(8);
+    expect(BENIGNAS_CERCANAS.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it.each(SINTOMAS_COLOQUIALES)("escala: %s", (m) => {
+    const { verdict, sintomas } = msg(m);
+    expect(verdict.action).toBe("escalar");
+    expect(verdict.categorias).toContain("sintoma_critico");
+    expect(sintomas.length).toBeGreaterThan(0);
+  });
+
+  it.each(BENIGNAS_CERCANAS)("no escala: %s", (m) => {
+    expect(msg(m).verdict.action).not.toBe("escalar");
+  });
+});

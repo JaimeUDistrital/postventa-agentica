@@ -167,6 +167,22 @@ const SINTOMAS: readonly { etiqueta: string; re: RegExp }[] = [
     etiqueta: "pérdida de dirección",
     re: /\b(perdi|perdio|pierde|perdida\s+de|perdiendo|sin)\s+(la\s+)?direccion\b|\bdireccion\b(\s+\w+){0,3}?\s+(no\s+responde\w*|se\s+bloque\w*|se\s+trab\w*|bloquead\w*)\b|\b(lost|losing|loss\s+of)\s+(the\s+)?steering\b|\bsteering\b(\s+\w+){0,3}?\s+(failed|locked|not\s+responding)\b/,
   },
+  {
+    etiqueta: "motor apagado en marcha",
+    re: /\bse\s+(me\s+)?(apago|apaga|apagan|apagaba|apagando|murio|muere|muriendo|cayo|cae|fue|va)\s+(solo|sola|de\s+golpe|de\s+repente|de\s+una|sin\s+aviso|andando|rodando|manejando|en\s+(marcha|movimiento|plena|la\s+via|la\s+carretera|la\s+autopista|el\s+camino))\b|\bse\s+(me\s+)?(apago|apaga|murio|muere)\s+(el\s+|mi\s+)?(carro|auto|coche|vehiculo|motor|camioneta|moto)\b(\s+\w+){0,3}?\s+(andando|rodando|manejando|en\s+(marcha|movimiento|plena|la\s+via|la\s+carretera|la\s+autopista))\b|\b(carro|auto|coche|vehiculo|motor)\b\s+se\s+(me\s+)?(apago|apaga|murio|muere)\b|\bse\s+(me\s+)?(apago|apaga)\b(\s+\w+){0,4}?\s+(andando|manejando|en\s+(marcha|movimiento|plena))\b|\b(engine|car)\s+(stalls?|stalled|shuts?\s+off|died)\b(\s+\w+){0,3}?\s+(while\s+driving|on\s+the\s+(road|highway))/,
+  },
+  {
+    etiqueta: "dirección dura o que no gira",
+    re: /\b(volante|direccion|timon)\b(\s+\w+){0,3}?\s+(duro|dura|durisim[oa]|pesad[oa]|rigid[oa]|trabad[oa]|atascad[oa]|tieso|tiesa|no\s+gira\w*|no\s+da\s+vuelta|no\s+se\s+mueve|no\s+responde\w*)\b|\bse\s+(me\s+)?(endurecio|puso\s+(duro|dura|pesad[oa])|trabo|atasco|bloqueo)\s+(el\s+|la\s+|mi\s+)?(volante|direccion|timon)\b|\bno\s+(puedo|logro|alcanzo\s+a)\s+(girar|mover|manejar)\s+(el\s+|la\s+)?(volante|direccion|timon)\b|\b(hard|stiff|heavy)\s+steering\b|\bsteering\s+(wheel\s+)?(is\s+|got\s+|went\s+)?(hard|stiff|heavy)\b/,
+  },
+  {
+    etiqueta: "pérdida súbita de frenos o potencia en vía",
+    re: /\b(perdi|perdio|pierdo|pierde|perdiendo|perdimos|quede|quedo|me\s+quede)\s+(sin\s+)?(los\s+|el\s+)?(frenos?|potencia|fuerza)\b|\b(perdida|falta)\s+de\s+(frenos?|potencia)\b|\bse\s+(me\s+)?(fue|va|fueron|iban)\s+(la\s+|el\s+)?(potencia|fuerza|freno|frenos)\b|\bse\s+(me\s+)?(quedo|queda)\s+sin\s+(frenos?|potencia|fuerza)\b|\bno\s+(tiene|tenia|tengo)\s+(potencia|fuerza\s+para\s+acelerar)\b|\b(lost|losing|loss\s+of)\s+(power|brakes?)\b/,
+  },
+  {
+    etiqueta: "testigo de frenos o aceite encendido",
+    re: /\b(testigo|luz|luces|bombillo|indicador|alerta)\b(\s+\w+){0,3}?\s+(de\s+)?(aceite|presion\s+de\s+aceite|freno|frenos|bateria\s+y\s+frenos)\b(\s+\w+){0,4}?\s+(encendid\w*|prendid\w*|prendio|prende|encendio|enciende|rojo|roja|titil\w*|parpade\w*|prendi\w*)\b|\bse\s+(me\s+)?(prendio|encendio|prende|enciende|activo)\s+(el\s+|la\s+|un\s+|una\s+)?(testigo|luz|bombillo|indicador|alerta)\b(\s+\w+){0,3}?\s+(de\s+)?(aceite|presion\s+de\s+aceite|freno|frenos)\b|\b(oil\s+(pressure\s+)?|brake\s+)(warning\s+)?(light|lamp)\b(\s+\w+){0,3}?\s+(on|red|flashing)\b/,
+  },
   { etiqueta: "airbag", re: /\bairbags?\b|\bbolsas?\s+de\s+aire\b/ },
   {
     etiqueta: "fuga de combustible",
