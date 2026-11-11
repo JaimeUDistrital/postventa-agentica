@@ -1,58 +1,24 @@
 /**
- * STUB del esqueleto caminante (T00). T08 lo reemplaza por el orquestador real
- * manteniendo la firma `runTurn(request): Promise<AgentTurn>`.
+ * Orquestador del agente (T08). API pública:
+ * - `runTurn(request)`: turno con fixtures + puertos mock NUEVOS por turno (el estado vive en
+ *   el token firmado, apto para serverless) + planner Gemini o determinista + DEMO_NOW.
+ * - `createAgent(deps)`: inyección de dependencias (tests, evals).
  */
 import type { AgentRequest, AgentTurn } from "@/core/contracts";
+import { DEMO_NOW } from "@/core/config";
+import { createMockPorts } from "@/core/adapters/mock";
+import { fixtures } from "@/core/data";
+import { selectPlanner } from "./llm";
+import { createAgent } from "./orchestrator";
+import { plannerDeterminista } from "./planner-determinista";
+import { resolverSecreto } from "./session";
+
+export { createAgent, type Agent, type AgentDeps } from "./orchestrator";
+export { plannerDeterminista } from "./planner-determinista";
+export { ConfiguracionError, SesionInvalidaError } from "./session";
 
 export async function runTurn(request: AgentRequest): Promise<AgentTurn> {
-  const turnId = crypto.randomUUID();
-  return {
-    sessionId: request.sessionId,
-    turnId,
-    state: "CONTACTO",
-    reply: {
-      text: "Hola, soy el asistente de postventa (esqueleto T00). Pronto verás aquí tu propuesta de mantenimiento.",
-      cards: [],
-    },
-    trace: [
-      {
-        id: `${turnId}-1`,
-        ts: new Date().toISOString(),
-        kind: "state",
-        agent: "Postventa",
-        name: "esqueleto",
-        system: "CRM",
-        autonomy: "informar",
-        payload: { escenario: request.scenarioId, tipo: request.tipo },
-        latencyMs: 0,
-        status: "ok",
-        detalle: "Respuesta stub del Paso 0",
-      },
-    ],
-    guardrail: {
-      entrada: {
-        allow: true,
-        action: "permitir",
-        categorias: [],
-        reasons: [],
-        maskedInput: request.message,
-        riskScore: 0,
-      },
-    },
-    mode: "deterministic",
-    memory: {
-      proactivo: { contactosUltimos30Dias: 0, optInWhatsapp: true, motivoContacto: null },
-      postventa: {
-        turnos: 1,
-        estado: "CONTACTO",
-        perfilVehiculo: { descripcion: "pendiente", kmEstimado: 0, proximoHitoKm: 0 },
-        historialServicios: [],
-        cotizacionId: null,
-        reservaId: null,
-      },
-      guardian: { intentosBloqueados: 0, alertas: [] },
-      copiloto: { casoAbiertoId: null },
-    },
-    stateToken: "stub-sin-firma",
-  };
+  const secret = resolverSecreto(process.env);
+  const planner = selectPlanner({ env: process.env, fallback: plannerDeterminista });
+  return createAgent({ ports: createMockPorts(fixtures), planner, now: DEMO_NOW, secret }).runTurn(request);
 }

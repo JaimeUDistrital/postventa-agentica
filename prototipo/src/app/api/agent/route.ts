@@ -1,7 +1,12 @@
-import { runTurn } from "@/core/agent";
+import { ConfiguracionError, SesionInvalidaError, runTurn } from "@/core/agent";
 import { AgentRequest } from "@/core/contracts";
 
-/** POST /api/agent · contrato en PLAN.md §4. Dueño a partir de Ola 2: T08. */
+/** El token de sesión usa node:crypto (HMAC). */
+export const runtime = "nodejs";
+
+const ERROR_INTERNO = { error: "Error interno del agente" };
+
+/** POST /api/agent · contrato en PLAN.md §4. Dueño: T08. */
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -21,8 +26,10 @@ export async function POST(request: Request) {
   try {
     return Response.json(await runTurn(parsed.data));
   } catch (error) {
-    // Nunca devolver detalles internos al cliente.
-    console.error("[api/agent]", error instanceof Error ? error.message : error);
-    return Response.json({ error: "Error interno del agente" }, { status: 500 });
+    if (error instanceof SesionInvalidaError) return Response.json({ error: error.message }, { status: 400 });
+    // Falla cerrado sin detalles internos para el cliente; el log sí es claro.
+    if (error instanceof ConfiguracionError) console.error("[api/agent] Configuración:", error.message);
+    else console.error("[api/agent]", error instanceof Error ? error.message : error);
+    return Response.json(ERROR_INTERNO, { status: 500 });
   }
 }
