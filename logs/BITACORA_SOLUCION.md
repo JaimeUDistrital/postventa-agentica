@@ -25,3 +25,13 @@
 - Hook `guardia-secretos` bloqueó un comando que contenía el patrón de archivos de entorno → el `.gitignore` se escribió con Write.
 - Email personal: `uv init` lo copió al `pyproject.toml` → eliminado (el repo será público). D4 pendiente.
 - **Evidencia:** `tsc --noEmit` exit 0 · `vitest run src` 5/5 · `check:assumptions` 2 pasan, 3 omitidos (modo final) · `next build` exit 0 · `check:fixtures` falla a propósito hasta T02.
+
+## 13:09–13:19 · Ola 1: primeras entregas (Orquestador)
+- Lanzadas T01 (opus·high), T02 (haiku·low), T03 (sonnet·medium), T04 (opus·high), T05 (sonnet·medium) en segundo plano.
+- **T05 ✅** (0c0b559): 13/13 tests (12 owner + humo). ScenarioBar exportada desde `ui/owner` y montada en la cabecera. Sin revisión visual (Chrome no arranca en el sandbox).
+- **T02 ✅** (94c8a82): `check:fixtures` 1/1. El agente reportó ESCALAR solo porque `tsc` fallaba en `tools.test.ts` de T03 (TDD en curso, ajeno); tras T03, tsc limpio → no cuenta como intento fallido.
+- **T03 ✅** (148eb3b): 29/29 tests. API: `createMockPorts`, `executeTool`, `estimarKm`, `parseQuoteId`/`encodeQuoteId`. Límite de `parseQuoteId` (ids con segmentos numéricos de 4+ dígitos) no aplica: ids `veh-01..05`.
+- **Verificado por el Orquestador:** `vitest run src` 46/46; `tsc` solo con errores del TDD de T04 en curso.
+- **Contrato** (e89c4a9): `PlannerResult` con `trace?` y `fallback?` opcionales, para que el planner Gemini reporte su evento `llm` (y errores) sin romper a nadie.
+- **Hallazgo:** el sandbox crea en la raíz puntos de montaje vacíos (dispositivos de caracteres: `.bashrc`, `.zshrc`, `.idea`, `!.env.*`…). Ignorados en `.gitignore` (839c6bd) para que nunca suban al repo público; no se borran.
+- Lanzadas T06, T07 y **T09 adelantada** (solo depende de T00; es la de más riesgo → fallar pronto).
