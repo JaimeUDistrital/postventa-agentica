@@ -206,7 +206,9 @@ export function createAgent(deps: AgentDeps): Agent {
     intentosBloqueados: s.intentosBloqueados,
     toolResults: [],
     confirmada: false,
-    llm: false,
+    // El modo informa del motor activo: un turno resuelto sin planner (Guardián, consentimiento)
+    // no convierte a la IA en «reglas». El camino con planner lo corrige si hubo respaldo.
+    llm: deps.planner.mode === "llm",
   });
 
   async function bloquear(a: Auditoria, s: SessionState, perfil: Perfil, v: GuardrailVerdict): Promise<Resultado> {

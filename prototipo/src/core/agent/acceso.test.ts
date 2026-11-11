@@ -50,6 +50,13 @@ const inicio: AgentRequest = { sessionId: "acc-1", scenarioId: "feliz", tipo: "i
 const accesoEvt = (t: AgentTurn) => t.trace.find((e) => e.name === "llm.acceso");
 
 describe("runTurnConEntorno · control de acceso al LLM", () => {
+  it("con la IA activa, un turno que el Guardián resuelve sin planner (sin consentimiento) se informa como llm y no llama a Gemini", async () => {
+    const client = fakeGemini();
+    const t = await runTurnConEntorno({ ...inicio, sessionId: "acc-sc", scenarioId: "sin_consentimiento" }, ENV_OK, client);
+    expect(client.llamadas()).toBe(0);
+    expect(t.mode).toBe("llm");
+  });
+
   it("por defecto (IA para todos): sin código + clave → planner LLM, sin evento llm.acceso", async () => {
     const client = fakeGemini();
     const t = await runTurnConEntorno(inicio, ENV_OK, client);
