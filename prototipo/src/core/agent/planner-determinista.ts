@@ -10,8 +10,9 @@ import { encodeQuoteId, parseQuoteId, type QuoteParams } from "@/core/tools";
 import { detectarIntencion, extraVentaCruzada, type Intencion } from "./intencion";
 import { evento } from "./trace";
 
-/** El tarifario cubre un ciclo de 4 hitos (10k–40k); 50k repite 10k, 60k repite 20k… */
+/** Hasta 60k devuelve el hito exacto (el tarifario los cubre). Por encima, cicla 4 hitos (70k → 30k…). */
 export function hitoTarifario(proximoHitoKm: number): number {
+  if (proximoHitoKm <= 60_000) return proximoHitoKm;
   const n = Math.max(1, Math.round(proximoHitoKm / 10_000));
   return (((n - 1) % 4) + 1) * 10_000;
 }
