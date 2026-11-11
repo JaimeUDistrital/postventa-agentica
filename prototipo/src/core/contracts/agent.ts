@@ -178,6 +178,8 @@ export const AgentRequest = z.object({
   accion: UserAction.optional(),
   /** Memoria de sesión firmada (HMAC) devuelta en el turno anterior. */
   stateToken: z.string().max(8000).optional(),
+  /** «Código del jurado»: habilita el planner Gemini (ADR 0006). Sin él, modo determinista. */
+  accessCode: z.string().max(64).optional(),
 });
 
 export const AgentTurn = z.object({
