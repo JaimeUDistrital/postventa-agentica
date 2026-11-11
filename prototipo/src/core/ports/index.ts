@@ -21,6 +21,7 @@ import type {
   TariffItem,
   ToolName,
   ToolResult,
+  TraceEvent,
   Vehicle,
 } from "@/core/contracts";
 
@@ -115,8 +116,17 @@ export interface PlannerUsage {
   costoUsd: number;
 }
 
+export interface PlannerResult {
+  step: PlannerStep;
+  usage?: PlannerUsage;
+  /** Eventos propios del planner (kind "llm", system "LLM"); el orquestador los añade a la traza del turno. */
+  trace?: TraceEvent[];
+  /** true si el LLM falló (sin key, timeout, respuesta inválida) y respondió el planner determinista. */
+  fallback?: boolean;
+}
+
 export interface Planner {
   readonly mode: "deterministic" | "llm";
   readonly model?: string;
-  next(input: PlannerInput): Promise<{ step: PlannerStep; usage?: PlannerUsage }>;
+  next(input: PlannerInput): Promise<PlannerResult>;
 }
