@@ -35,3 +35,11 @@
 - **Contrato** (e89c4a9): `PlannerResult` con `trace?` y `fallback?` opcionales, para que el planner Gemini reporte su evento `llm` (y errores) sin romper a nadie.
 - **Hallazgo:** el sandbox crea en la raíz puntos de montaje vacíos (dispositivos de caracteres: `.bashrc`, `.zshrc`, `.idea`, `!.env.*`…). Ignorados en `.gitignore` (839c6bd) para que nunca suban al repo público; no se borran.
 - Lanzadas T06, T07 y **T09 adelantada** (solo depende de T00; es la de más riesgo → fallar pronto).
+
+## 13:19–13:32 · Ola 1 cerrada (salvo T07) y Ola 2 arrancada (Orquestador)
+- **D4 resuelta:** commits con el email noreply de GitHub. El sandbox no deja escribir `.git/config` → se pasa `git -c user.email=…` en cada commit; los 8 commits anteriores se reescriben antes del primer push.
+- **T06 ✅** (ffa5f54) 8/8 · **T04 ✅** (7a4a230) 156/156, 31/31 ataques bloqueados, 0/15 falsos positivos · **T09 ✅** (2b7a342) 19/19; function calling «supported» para ambos modelos (aistudio.google.com/docs/models; sin prueba con red real) · **T01 ✅** (4961366) 34 supuestos, 21 fuentes, final 5/5 · **T11 ✅** (558d110) 8 diagramas, sintaxis OK (render pendiente en GitHub).
+- **Verificador (5 cifras de T01):** 2 CONFIRMADAS (margen, WhatsApp), 3 PARCIALES (visitas, ticket, tasa de descuento: fuente real pero con un salto supuesto sin declarar). 0 no confirmadas. Informe: `logs/tareas/T01_verificacion.md`.
+- **Hallazgo de negocio (T07, supuestos v1.0):** base sin payback en 36 meses (VPN −140.878 USD), pesimista peor, optimista payback 11 meses. Causa: ~93 USD de margen por cita incremental (cálculo del Orquestador) frente a 4.500 USD/mes de costo fijo y 60.000 USD de inversión, ambos supuestos propios sin fuente.
+- **Decisión del usuario:** revisar costos con fuentes reales (T01b) + punto de equilibrio en el Excel (T07b); se publica el resultado que salga, aunque siga negativo.
+- Lanzadas T08 (opus·high), T01b y T07b (sonnet·medium).
