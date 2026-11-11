@@ -1,0 +1,49 @@
+{
+  "version_supuestos": "1.1",
+  "fecha": "2026-11-11",
+  "moneda": "USD",
+  "escenarios": {
+    "pesimista": {
+      "ingresos_3y": 17256.05830245983,
+      "beneficio_3y": -212851.12190685183,
+      "inversion": 71800,
+      "payback_meses": null,
+      "roi_3y": -2.964500305109357,
+      "vpn": -179803.31987586693,
+      "margen_por_cita": 58.00569105691058,
+      "citas_mes_equilibrio_operativo": 70.9413149817091,
+      "citas_mes_payback_24": 122.51671408748788,
+      "citas_mes_actuales": 3.967648027920001,
+      "parque_necesario_payback_24": 134968.94935497813,
+      "sedes_equivalentes": 33.74223733874453
+    },
+    "base": {
+      "ingresos_3y": 128584.45004418555,
+      "beneficio_3y": -49031.04665575182,
+      "inversion": 47500,
+      "payback_meses": null,
+      "roi_3y": -1.0322325611737226,
+      "vpn": -49816.10968268679,
+      "margen_por_cita": 94.9872323232323,
+      "citas_mes_equilibrio_operativo": 18.42352869114999,
+      "citas_mes_payback_24": 39.25966232995057,
+      "citas_mes_actuales": 20.88432263808,
+      "parque_necesario_payback_24": 11194.733676520904,
+      "sedes_equivalentes": 2.238946735304181
+    },
+    "optimista": {
+      "ingresos_3y": 656334.2455530395,
+      "beneficio_3y": 299416.78778551595,
+      "inversion": 17300,
+      "payback_meses": 4,
+      "roi_3y": 17.307328773729246,
+      "vpn": 234837.24005224198,
+      "margen_por_cita": 143.56666666666666,
+      "citas_mes_equilibrio_operativo": 5.25888089157186,
+      "citas_mes_payback_24": 10.27977710703506,
+      "citas_mes_actuales": 79.07337900000003,
+      "parque_necesario_payback_24": 1038.2040203034953,
+      "sedes_equivalentes": 0.1730340033839159
+    }
+  }
+}
