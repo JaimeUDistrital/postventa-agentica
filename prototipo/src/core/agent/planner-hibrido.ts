@@ -74,9 +74,19 @@ const eventoHerramienta = (tool: ToolName) =>
     payload: { tool },
   });
 
-/** Duración («cuatro horas», «3 días») o precio («$ 200.000», «150.000 pesos») afirmados en texto libre. */
-const DATO_NO_VERIFICADO =
-  /\b(?:\d+(?:[.,]\d+)?|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|media|medio)\s+(?:horas?|minutos?|dias?|semanas?)\b|\$\s?\d|\b\d[\d.,]*\s*(?:pesos|cop|usd|dolares)\b/;
+/**
+ * Duración («cuatro horas», «2 h», «3 días») o precio («$ 200.000», «200 mil pesos», «COP 200.000»)
+ * afirmados en texto libre. Falla hacia lo seguro: una cifra legítima del contexto también se reemplaza.
+ */
+const DATO_NO_VERIFICADO = new RegExp(
+  [
+    String.raw`\b\d+(?:[.,]\d+)?\s*(?:horas?|hrs?|h|minutos?|mins?|dias?|semanas?)\b`,
+    String.raw`\b(?:un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|treinta|cuarenta|media|medio)\s+(?:horas?|hrs?|minutos?|dias?|semanas?)\b`,
+    String.raw`\$\s?\d`,
+    String.raw`\b(?:cop|usd)\s?\$?\s?\d`,
+    String.raw`\b\d[\d.,]*\s*(?:mil|millones?)?\s*(?:de\s+)?(?:pesos|cop|usd|dolares)\b`,
+  ].join("|"),
+);
 const TEXTO_SIN_DATO =
   "Ese dato no lo tengo confirmado en el sistema. Puedo mostrarle la cotización, agendar su cita o pasarle con un asesor (escriba «asesor»).";
 

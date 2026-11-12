@@ -200,6 +200,13 @@ describe("createPlannerHibrido", () => {
     ["duración con cifra", "Se demora 3 horas aproximadamente."],
     ["precio inventado", "Eso le cuesta $ 200.000 adicionales."],
     ["precio en pesos", "Son 150.000 pesos más."],
+    ["horas abreviadas", "Son unas 2 h en el taller."],
+    ["hrs", "Tarda 3 hrs."],
+    ["precio con «mil»", "Le sale en 200 mil pesos."],
+    ["moneda antes de la cifra", "Queda en COP 200.000."],
+    ["dólares antes de la cifra", "Son USD 50 más."],
+    ["minutos en letra", "En veinte minutos está listo."],
+    ["horas en letra (más de diez)", "Lo tenemos doce horas."],
   ])("ruta IA: %s se reemplaza por un texto seguro (guardarraíl de datos no verificados)", async (_n, texto) => {
     const r = await createPlannerHibrido(iaFalsa(responder({ text: texto })).planner).next(entrada({ message: "hola" }));
     const final = r.step as Extract<PlannerStep, { kind: "final" }>;

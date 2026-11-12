@@ -200,11 +200,14 @@ function detalle(input: PlannerInput, params: QuoteParams): PlannerStep {
   const servicios = items.filter((l) => !l.sku).map((l) => l.concepto.replace(/^Mano de obra: /, ""));
   const repuestos = items.filter((l) => l.sku).map((l) => l.concepto.toLowerCase());
   const horas = out.data.duracionHoras.toLocaleString("es-CO", { maximumFractionDigits: 1 });
-  return final(
-    input,
-    `Según el tarifario oficial: ${servicios.join("; ")}. Repuestos: ${repuestos.join(", ")}. Tiempo estimado en el taller: ${horas} h. ¿Le agendo la cita?`,
-    [],
-  );
+  const partes = [
+    servicios.length ? `Según el tarifario oficial: ${servicios.join("; ")}.` : "",
+    repuestos.length ? `Repuestos: ${repuestos.join(", ")}.` : "",
+    `Tiempo estimado en el taller: ${horas} h.`,
+    out.data.todosDisponibles ? "" : "Hay un repuesto agotado: al agendar le muestro fechas alternativas.",
+    "¿Le agendo la cita?",
+  ];
+  return final(input, partes.filter(Boolean).join(" "), []);
 }
 
 function seguros(input: PlannerInput): PlannerStep {

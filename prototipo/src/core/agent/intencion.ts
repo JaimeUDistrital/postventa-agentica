@@ -30,11 +30,12 @@ const REGLAS: readonly [Intencion, RegExp][] = [
     /\b(asesor|humano|una persona|molest|queja|enojad|furios)|\b(?:pueden|puede|podrian|podria)\s+(?:me\s+)?(?:llamar|contactar)\b|\b(?:quiero|necesito)\s+que\s+me\s+(?:llamen|contacten|llame|contacte)\b/,
   ],
   ["confirmar", /\bconfirm/],
-  // QA en vivo: qué incluye y cuánto dura salen del tarifario (la IA los inventaba).
-  ["detalle", /(que (?:me |le )?(?:incluye|trae|hacen|revisan|cambian)|en que consiste|cuanto (?:tiempo|se demora|se tarda|demora|dura|tarda)|duracion)/],
   ["rechazar_venta_cruzada", /\bno (gracias|quiero|me interesa)\b|\bsin (el )?paquete\b/],
-  ["venta_cruzada", /(freno|pastilla|bateria|llanta|alineac|balanceo|agregue|agrega|anad)/],
   ["seguros", /\b(seguro|seguros|soat|poliza)\b/],
+  // QA en vivo: qué incluye y cuánto dura salen del tarifario (la IA los inventaba).
+  // Va después de rechazar y seguros («¿qué incluye el seguro?») y antes de venta cruzada: preguntar no agrega.
+  ["detalle", /\b(que (?:me |le )?(?:incluye|trae|hacen|revisan|cambian)|en que consiste|cuanto (?:tiempo|se demora|se tarda|demora|dura|tarda)|duracion)/],
+  ["venta_cruzada", /(freno|pastilla|bateria|llanta|alineac|balanceo|agregue|agrega|anad)/],
   // QA en vivo: «cuánto tiempo / se demora / dura» no es una pregunta de precio.
   ["precio", /(precio|\bcuanto\b(?!\s+(?:se\s+)?(?:tiempo|dur|demor|tard|hora|minut|dia|km|kilometr))|cuesta|valor|cotiz)/],
   ["agendar", /(agend|reserv|\bcita\b|^\s*si\b|\bsi,|\bsi quiero\b|\bme interesa\b)/],

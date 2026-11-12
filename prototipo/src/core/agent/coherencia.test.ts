@@ -10,6 +10,7 @@ import { createMockPorts } from "@/core/adapters/mock";
 import { fixtures } from "@/core/data";
 import type { Planner } from "@/core/ports";
 import { createAgent, plannerDeterminista } from "./index";
+import { detectarIntencion } from "./intencion";
 
 const SECRET = "secreto-de-prueba-0123456789abcdef";
 type Paso = Partial<Omit<AgentRequest, "sessionId" | "scenarioId" | "stateToken">>;
@@ -204,5 +205,32 @@ describe("QA en vivo · qué incluye y cuánto dura salen del tarifario (no de l
     const [, , t] = await conversar("feliz", [INICIO, acc("agregar_venta_cruzada"), msg("¿Cuánto tiempo se demora el servicio?")]);
     expect(t.reply.text).toContain("3 h");
     expect(t.reply.text).toContain("pastillas de freno");
+  });
+});
+
+describe("Revisión · la pregunta de detalle no tapa otras intenciones", () => {
+  const de = (message: string) => detectarIntencion({ sessionId: "s", scenarioId: "feliz", tipo: "mensaje", message }, message);
+
+  it.each([
+    ["¿Qué incluye el seguro?", "seguros"],
+    ["No gracias, ¿cuánto dura?", "rechazar_venta_cruzada"],
+    ["No sé porque hacen eso", "otro"],
+    ["aunque revisan todo, igual", "otro"],
+    ["¿Qué le revisan al carro?", "detalle"],
+    ["¿Cuánto tiempo se demora?", "detalle"],
+  ])("«%s» → %s", (texto, esperado) => {
+    expect(de(texto)).toBe(esperado);
+  });
+
+  it("«¿qué incluye el seguro?» muestra las ofertas de seguros, no el detalle del mantenimiento", async () => {
+    const [, t] = await conversar("feliz", [INICIO, msg("¿Qué incluye el seguro?")]);
+    expect(tipos(t)).toContain("seguro");
+    expect(t.reply.text).not.toContain("Tiempo estimado en el taller");
+  });
+
+  it("en sin_stock, el detalle avisa que hay un repuesto agotado antes de ofrecer agendar", async () => {
+    const [, t] = await conversar("sin_stock", [INICIO, msg("¿Qué incluye el mantenimiento?")]);
+    expect(t.reply.text).toMatch(/agotado/i);
+    expect(t.reply.text).not.toMatch(/: \./);
   });
 });
