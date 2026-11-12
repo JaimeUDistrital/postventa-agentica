@@ -96,6 +96,13 @@ function seccionLlm(llm: CorridaLlm[], hayClave: boolean): string[] {
   const llamadasTotales = llm.reduce((s, l) => s + l.resultados.reduce((x, r) => x + r.uso.llamadas, 0), 0);
   if (llamadasTotales === 0) {
     const fb = llm.reduce((s, l) => s + l.resultados.reduce((x, r) => x + r.uso.fallbacks, 0), 0);
+    if (fb === 0) {
+      return [
+        ...out,
+        "**Sin llamadas a Gemini:** ningún turno de los casos pasó por la ruta IA. El enrutador híbrido (ADR 0009) los resolvió todos con el motor de reglas, así que estos resultados equivalen al modo determinista y NO comparan modelos. La ruta IA se prueba con los tests de `planner-hibrido` y con el QA en vivo.",
+        "",
+      ];
+    }
     return [
       ...out,
       `**Corrida no concluyente:** hay clave en el entorno, pero ninguna llamada a Gemini tuvo éxito (0 llamadas OK, ${fb} respaldos al planner determinista; red bloqueada, clave inválida o cuota). Estos resultados equivalen al modo determinista y NO se usan para comparar modelos.`,

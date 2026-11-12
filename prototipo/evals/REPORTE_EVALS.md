@@ -1,6 +1,6 @@
 # Reporte de evals del agente de postventa
 
-- **Fecha:** 2026-11-11T23:38:22.240Z
+- **Fecha:** 2026-11-12T01:11:49.746Z
 - **Modo:** determinista (planner `plannerDeterminista`, puertos mock) · modo LLM: ejecutado
 - **Población:** 32 casos, 70 turnos; ninguna ejecución descartada (los casos con excepción cuentan como fallo).
 - **Comando:** `npm run evals` (desde `prototipo/`)
@@ -70,6 +70,4 @@ Sin fallos: todos los casos cumplen todos sus criterios.
 
 ## Modo LLM (Gemini)
 
-**Corrida no concluyente:** hay clave en el entorno, pero ninguna llamada a Gemini tuvo éxito (0 llamadas OK, 280 respaldos al planner determinista; red bloqueada, clave inválida o cuota). Estos resultados equivalen al modo determinista y NO se usan para comparar modelos.
-
-Pendiente: ejecutar `GEMINI_API_KEY=… npm run evals` fuera del sandbox.
+**Sin llamadas a Gemini:** ningún turno de los casos pasó por la ruta IA. El enrutador híbrido (ADR 0009) los resolvió todos con el motor de reglas, así que estos resultados equivalen al modo determinista y NO comparan modelos. La ruta IA se prueba con los tests de `planner-hibrido` y con el QA en vivo.
