@@ -4,7 +4,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { trmCopUsd } from "@/core/config";
 import type { ReplyCard } from "@/core/contracts";
 import type { ChatMessage, DemoSession } from "@/ui/contracts";
-import { formatCop, formatFechaHora } from "./format";
+import { formatCop, formatFecha, formatFechaHora } from "./format";
 import { OwnerApp } from "./index";
 
 afterEach(cleanup);
@@ -118,6 +118,33 @@ test("alternativas lista franjas y motivo", () => {
   const c = screen.getByTestId("card-alternativas");
   expect(c.textContent).toContain("Ese horario ya no está libre.");
   expect(c.querySelectorAll("li").length).toBe(1);
+});
+
+test("cotización con paquete sugerido: explica qué es, para qué sirve y cuánto suma; el botón lo agrega", () => {
+  const paquete = { tariffId: "VC-PAS-01", descripcion: "Revisión y cambio de pastillas de freno delanteras", precioUsd: 40 };
+  const s = renderCards([{ type: "cotizacion", quote, paquete }]);
+  const caja = screen.getByTestId("paquete-sugerido");
+  expect(caja.textContent).toContain("Recomendado para su carro");
+  expect(caja.textContent).toContain(paquete.descripcion);
+  expect(caja.textContent).toContain("frenos");
+  expect(caja.textContent).toContain(`+ ${formatCop(40)}`);
+  fireEvent.click(screen.getByRole("button", { name: `Agregar al mantenimiento (+ ${formatCop(40)})` }));
+  expect(s.act).toHaveBeenCalledWith("agregar_venta_cruzada");
+});
+
+test("seguros: dice cuándo vence el SOAT, si no hay póliza y marca el SOAT como obligatorio", () => {
+  renderCards([
+    {
+      type: "seguro",
+      soat: { vence: "2027-01-15", dias: 64 },
+      polizaVence: null,
+      ofertas: [{ id: "o1", aseguradora: "Aseguradora X", producto: "SOAT", primaAnualUsd: 120, coberturaResumen: "Lesiones a terceros", comisionAgenciaUsd: 12 }],
+    },
+  ]);
+  const ctx = screen.getByTestId("seguro-contexto").textContent;
+  expect(ctx).toContain(`Su SOAT vence en 64 días (${formatFecha("2027-01-15")})`);
+  expect(ctx).toContain("no registra una póliza todo riesgo");
+  expect(screen.getByTestId("card-seguro").textContent).toContain("Obligatorio");
 });
 
 test("seguro: prima en COP y no vuelve a ofrecer «Ver seguros» (T20 · A2)", () => {

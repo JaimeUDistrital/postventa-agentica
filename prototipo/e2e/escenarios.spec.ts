@@ -95,13 +95,16 @@ test("Reiniciar limpia el chat y el guion", async ({ page }) => {
   await expect(siguiente(page)).toContainText("0/0");
 });
 
+/** Con el paquete verificado el botón dice «Agregar al mantenimiento (+ $…)»; sin él, el texto anterior. */
+const AGREGAR_PAQUETE = /^Agregar (al mantenimiento|paquete de desgaste)/;
+
 test("T20 · A: el paquete no se agrega dos veces y las tarjetas viejas pierden sus botones", async ({ page }) => {
   const errores = vigilaConsola(page);
   await page.goto("/");
   await page.getByTestId("scenario-btn-feliz").click();
-  await chat(page).getByRole("button", { name: "Agregar paquete de desgaste" }).click();
+  await chat(page).getByRole("button", { name: AGREGAR_PAQUETE }).click();
   await expect(chat(page).getByText("Paquete de desgaste incluido")).toBeVisible();
-  await expect(chat(page).getByRole("button", { name: "Agregar paquete de desgaste" })).toHaveCount(0);
+  await expect(chat(page).getByRole("button", { name: AGREGAR_PAQUETE })).toHaveCount(0);
   await expect(chat(page).getByText(/Cotización anterior/)).toHaveCount(1);
   // el guion pide frenos otra vez: el agente no vuelve a cotizar
   await siguiente(page).click();
@@ -110,7 +113,7 @@ test("T20 · A: el paquete no se agrega dos veces y las tarjetas viejas pierden 
   await expect(chat(page).getByText("El paquete ya está incluido en su cotización. ¿Le agendo la cita?")).toBeVisible();
   await expect(chat(page).getByTestId("card-cotizacion")).toHaveCount(3);
   await chat(page).getByRole("button", { name: "Quitar paquete" }).click();
-  await expect(chat(page).getByRole("button", { name: "Agregar paquete de desgaste" })).toHaveCount(1);
+  await expect(chat(page).getByRole("button", { name: AGREGAR_PAQUETE })).toHaveCount(1);
   expect(errores).toEqual([]);
 });
 

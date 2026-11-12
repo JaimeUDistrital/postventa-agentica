@@ -3,7 +3,15 @@ import { CalendarCheck, CircleCheck, Gauge, Headset, ShieldCheck, ShieldAlert, C
 import { useId, type ReactNode } from "react";
 import type { InsuranceOffer, PriceQuote, ReplyCard, UserAction } from "@/core/contracts";
 import { parseQuoteId } from "@/core/tools/quote";
-import { formatCop, formatFechaHora, formatKm, formatUsd } from "./format";
+import { formatCop, formatFecha, formatFechaHora, formatKm, formatUsd } from "./format";
+
+/** Para qué le sirve al cliente cada ítem de venta cruzada del tarifario (texto de producto, sin cifras). */
+const BENEFICIO_PAQUETE: Record<string, string> = {
+  "VC-PAS-01": "Las pastillas se gastan con el uso; unos frenos en buen estado le dan frenadas seguras. Se hace en la misma visita.",
+  "VC-ALI-01": "Evita que las llantas se gasten disparejo y que el carro se desvíe. Se hace en la misma visita.",
+  "VC-BAT-01": "Evita quedarse varado por una batería débil. Se hace en la misma visita.",
+};
+const BENEFICIO_GENERICO = "Se hace en la misma visita, sin volver al taller.";
 
 interface Props {
   card: ReplyCard;
@@ -113,6 +121,17 @@ export function ReplyCardView({ card, act, disabled, anterior = false, send, ofr
               </dd>
             </div>
           </dl>
+          {!anterior && !conPaquete && card.paquete && (
+            <div data-testid="paquete-sugerido" className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Recomendado para su carro</p>
+              <p className="mt-0.5 font-medium text-slate-900">{card.paquete.descripcion}</p>
+              <p className="mt-0.5 text-xs text-slate-700">{BENEFICIO_PAQUETE[card.paquete.tariffId] ?? BENEFICIO_GENERICO}</p>
+              <p className="mt-1 text-sm text-slate-800">
+                <span className="font-semibold tabular-nums">+ {formatCop(card.paquete.precioUsd)}</span> · se suma a esta cotización y
+                puede quitarlo cuando quiera.
+              </p>
+            </div>
+          )}
           {anterior ? (
             <NotaAnterior>Cotización anterior · use la más reciente de la conversación.</NotaAnterior>
           ) : (
@@ -126,7 +145,7 @@ export function ReplyCardView({ card, act, disabled, anterior = false, send, ofr
                 </button>
               ) : (
                 <button type="button" disabled={disabled} onClick={() => act("agregar_venta_cruzada")} className={btnSecundario}>
-                  Agregar paquete de desgaste
+                  {card.paquete ? `Agregar al mantenimiento (+ ${formatCop(card.paquete.precioUsd)})` : "Agregar paquete de desgaste"}
                 </button>
               )}
               {ofrecerSeguros && (
@@ -180,6 +199,8 @@ export function ReplyCardView({ card, act, disabled, anterior = false, send, ofr
       return (
         <SeguroCard
           ofertas={card.ofertas}
+          soat={card.soat}
+          polizaVence={card.polizaVence}
           send={send}
           disabled={disabled || !!seguro?.cerrada}
           elegida={seguro?.elegida ?? null}
@@ -206,19 +227,39 @@ export function ReplyCardView({ card, act, disabled, anterior = false, send, ofr
 /** T22 · 4b: ofertas numeradas; nunca se muestra `comisionAgenciaUsd` (es interna de la agencia). */
 function SeguroCard({
   ofertas,
+  soat,
+  polizaVence,
   send,
   disabled,
   elegida,
 }: {
   ofertas: InsuranceOffer[];
+  soat?: { vence: string; dias: number };
+  polizaVence?: string | null;
   send?: (texto: string) => void;
   disabled?: boolean;
   elegida: number | null;
 }) {
   const idBase = useId();
+  const contexto = [
+    soat &&
+      (soat.dias > 0
+        ? `Su SOAT vence en ${soat.dias} días (${formatFecha(soat.vence)}).`
+        : soat.dias === 0
+          ? "Su SOAT vence hoy."
+          : `Su SOAT venció el ${formatFecha(soat.vence)}.`),
+    polizaVence === null
+      ? "Hoy no registra una póliza todo riesgo, que protege su carro ante choques y robo."
+      : polizaVence && `Su póliza actual vence el ${formatFecha(polizaVence)}.`,
+  ].filter(Boolean);
   return (
     <article aria-label="Seguros" data-testid="card-seguro" className={base + " border-slate-200"}>
       <Titulo icono={<ShieldCheck className="size-4" />}>Seguros para su vehículo</Titulo>
+      {contexto.length > 0 && (
+        <p data-testid="seguro-contexto" className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950">
+          {contexto.join(" ")}
+        </p>
+      )}
       <ol className="space-y-2">
         {ofertas.map((o, i) => {
           const n = i + 1;
@@ -232,6 +273,11 @@ function SeguroCard({
                 <div className="flex justify-between gap-3">
                   <span id={id} className="font-medium text-slate-900">
                     {o.aseguradora} · {o.producto}
+                    {o.producto === "SOAT" && (
+                      <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-amber-900">
+                        Obligatorio
+                      </span>
+                    )}
                   </span>
                   <span className="shrink-0 tabular-nums font-semibold text-brand">{formatCop(o.primaAnualUsd)}/año</span>
                 </div>

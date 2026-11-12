@@ -17,6 +17,7 @@ import {
 } from "@/core/contracts";
 import type { CardKind, Ports } from "@/core/ports";
 import { parseQuoteId } from "@/core/tools";
+import { PAQUETE_DESGASTE } from "./intencion";
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
@@ -83,8 +84,10 @@ function tarjeta(kind: CardKind, rs: ToolResult[], confirmada: boolean): ReplyCa
       return c && { type: "alerta_km", kmEstimado: c.kmEstimado, proximoHitoKm: c.proximoHitoKm, diasParaHito: c.diasParaHito };
     }
     case "cotizacion": {
-      const q = cotizacionDe(rs);
-      return q && { type: "cotizacion", quote: q };
+      const v = salida(rs, "verificar_stock_y_precio", VerificarStockOutput);
+      if (!v) return undefined;
+      const paquete = v.ventaCruzadaSugerida.find((s) => s.tariffId === PAQUETE_DESGASTE);
+      return { type: "cotizacion", quote: v.cotizacion, ...(paquete ? { paquete } : {}) };
     }
     case "reserva": {
       const a = agendaDe(rs);
@@ -102,7 +105,14 @@ function tarjeta(kind: CardKind, rs: ToolResult[], confirmada: boolean): ReplyCa
     }
     case "seguro": {
       const s = salida(rs, "cotizar_aliados_seguros", CotizarSegurosOutput);
-      return s && { type: "seguro", ofertas: s.ofertas };
+      return (
+        s && {
+          type: "seguro",
+          ofertas: s.ofertas,
+          soat: { vence: s.vencimientoSoat, dias: s.diasParaVencimientoSoat },
+          polizaVence: s.vencimientoPoliza,
+        }
+      );
     }
   }
 }

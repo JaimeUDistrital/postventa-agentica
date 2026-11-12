@@ -116,7 +116,9 @@ export async function buildQuote(ports: Ports, p: QuoteParams): Promise<QuoteBui
 
   const subtotalUsd = precioItem(items);
   const sugeridas: QuoteBuild["ventaCruzadaSugerida"] = [];
-  for (const c of crossAll.filter((c) => !p.extras.includes(c.id))) {
+  // No sugiere lo que el mantenimiento ya incluye (p. ej. pastillas en el de 40.000 km).
+  const yaIncluido = (c: TariffItem) => c.repuestos.length > 0 && c.repuestos.every((r) => requeridos.has(r.sku));
+  for (const c of crossAll.filter((c) => !p.extras.includes(c.id) && !yaIncluido(c))) {
     sugeridas.push({ tariffId: c.id, descripcion: c.descripcion, precioUsd: precioItem((await linesFor(ports, c)).lines) });
   }
 

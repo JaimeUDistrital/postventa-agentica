@@ -26,6 +26,13 @@ const con = (f: Intl.DateTimeFormat) => (iso: string): string => {
   return fecha ? f.format(fecha) : iso;
 };
 
+const fechaLarga = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+/** "YYYY-MM-DD" → "15 de enero de 2027". */
+export function formatFecha(isoDia: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDia);
+  return m ? fechaLarga.format(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))) : isoDia;
+}
+
 /** → "jueves, 12 de noviembre". */
 export const formatDia = con(dia);
 /** → "jue, 12 de nov". */

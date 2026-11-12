@@ -136,3 +136,38 @@ describe("T21 · elegir un seguro", () => {
     expect(t.handoff?.motivo).not.toBe("seguro");
   });
 });
+
+describe("Paquete y seguros explicados al cliente con datos verificados", () => {
+  const cotizacion = (t: AgentTurn) => {
+    const c = t.reply.cards.find((x) => x.type === "cotizacion");
+    if (c?.type !== "cotizacion") throw new Error("sin cotización");
+    return c;
+  };
+
+  it("la cotización inicial trae el paquete sugerido con su descripción del tarifario", async () => {
+    const [t] = await conversar("feliz", [INICIO]);
+    expect(cotizacion(t).paquete).toMatchObject({ tariffId: "VC-PAS-01", descripcion: "Revisión y cambio de pastillas de freno delanteras" });
+  });
+
+  it("el «+ precio» del paquete es exactamente lo que sube el total al agregarlo", async () => {
+    const [ini, con] = await conversar("feliz", [INICIO, acc("agregar_venta_cruzada")]);
+    const antes = cotizacion(ini);
+    expect(antes.paquete?.precioUsd).toBeGreaterThan(0);
+    expect(cotizacion(con).quote.totalUsd - antes.quote.totalUsd).toBeCloseTo(antes.paquete!.precioUsd, 2);
+  });
+
+  it("con el paquete ya agregado, la cotización no lo vuelve a sugerir", async () => {
+    const [, con] = await conversar("feliz", [INICIO, acc("agregar_venta_cruzada")]);
+    expect(cotizacion(con).paquete).toBeUndefined();
+  });
+
+  it("la tarjeta de seguros dice cuándo vence el SOAT y si hay póliza, según la herramienta", async () => {
+    const [, t] = await conversar("feliz", [INICIO, acc("ver_seguros")]);
+    const c = t.reply.cards.find((x) => x.type === "seguro");
+    if (c?.type !== "seguro") throw new Error("sin seguros");
+    const v = fixtures.vehicles.find((x) => x.id === "veh-01")!;
+    expect(c.soat?.vence).toBe(v.vencimientoSoat);
+    expect(Number.isInteger(c.soat?.dias)).toBe(true);
+    expect(c.polizaVence).toBe(v.vencimientoPoliza);
+  });
+});

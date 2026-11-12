@@ -49,10 +49,13 @@ export function detectarIntencion(request: AgentRequest, maskedMessage: string):
 /** Solo estas intenciones cuentan como confirmación explícita del cliente para reservar. */
 export const confirmaReserva = (i: Intencion): boolean => i === "agendar" || i === "confirmar";
 
-/** Ítem de venta cruzada del tarifario según el texto (por defecto, pastillas de freno). */
+/** «Paquete de desgaste» del botón «Agregar»: ítem de venta cruzada por defecto del tarifario. */
+export const PAQUETE_DESGASTE = "VC-PAS-01";
+
+/** Ítem de venta cruzada del tarifario según el texto (por defecto, el paquete de desgaste). */
 export function extraVentaCruzada(maskedMessage: string): string {
   const t = normalizar(maskedMessage);
   if (/bateria/.test(t)) return "VC-BAT-01";
   if (/(llanta|alineac|balanceo)/.test(t)) return "VC-ALI-01";
-  return "VC-PAS-01";
+  return PAQUETE_DESGASTE;
 }

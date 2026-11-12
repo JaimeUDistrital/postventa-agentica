@@ -75,6 +75,19 @@ describe("entrada inválida", () => {
   });
 });
 
+describe("verificar_stock_y_precio · venta cruzada sugerida", () => {
+  it("no sugiere lo que el mantenimiento ya incluye (40.000 km ya trae pastillas delanteras)", async () => {
+    const { fixtures } = await import("@/core/data");
+    const ctx: ToolContext = { ports: createMockPorts(fixtures, { now: NOW }), now: NOW };
+    const ids = async (hitoKm: number) => {
+      const r = await executeTool("verificar_stock_y_precio", { vehicleId: "veh-01", hitoKm }, ctx);
+      return (r.output as { ventaCruzadaSugerida: { tariffId: string }[] }).ventaCruzadaSugerida.map((x) => x.tariffId);
+    };
+    expect(await ids(40000)).not.toContain("VC-PAS-01");
+    expect(await ids(30000)).toContain("VC-PAS-01");
+  });
+});
+
 describe("verificar_stock_y_precio", () => {
   it("precio solo del tarifario: mano de obra + repuestos × cantidad", async () => {
     const r = await executeTool("verificar_stock_y_precio", { vehicleId: "v_cx30", hitoKm: 10000 }, mkCtx());

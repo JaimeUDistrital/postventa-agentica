@@ -156,10 +156,21 @@ export const ReplyCard = z.discriminatedUnion("type", [
     proximoHitoKm: z.number(),
     diasParaHito: z.number(),
   }),
-  z.object({ type: z.literal("cotizacion"), quote: PriceQuote }),
+  z.object({
+    type: z.literal("cotizacion"),
+    quote: PriceQuote,
+    /** Paquete de desgaste que el botón agrega, con descripción y precio del tarifario; ausente si ya está incluido. */
+    paquete: z.object({ tariffId: z.string(), descripcion: z.string(), precioUsd: z.number().nonnegative() }).optional(),
+  }),
   z.object({ type: z.literal("reserva"), booking: Booking }),
   z.object({ type: z.literal("alternativas"), slots: z.array(BaySlot), motivo: z.string() }),
-  z.object({ type: z.literal("seguro"), ofertas: z.array(InsuranceOffer) }),
+  z.object({
+    type: z.literal("seguro"),
+    ofertas: z.array(InsuranceOffer),
+    /** Por qué le conviene al cliente: vencimiento del SOAT y de la póliza (null = no tiene), de la herramienta. */
+    soat: z.object({ vence: IsoDate, dias: z.number().int() }).optional(),
+    polizaVence: IsoDate.nullable().optional(),
+  }),
   z.object({ type: z.literal("handoff"), casoId: z.string(), mensaje: z.string() }),
   z.object({ type: z.literal("bloqueo"), motivo: z.string() }),
 ]);

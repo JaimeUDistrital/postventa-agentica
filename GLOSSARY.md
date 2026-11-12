@@ -13,6 +13,7 @@ Términos del dominio automotriz y del producto, tal como se usan en este repo.
 - **SOAT**: seguro obligatorio de accidentes de tránsito en Colombia.
 - **Póliza todo riesgo**: seguro voluntario que cubre daños propios y a terceros; se ofrece mediante aliados.
 - **Venta cruzada**: oferta de un producto adicional relacionado (p. ej. pastillas de freno junto al mantenimiento).
+- **Paquete de desgaste**: la venta cruzada que agrega el botón de la cotización (`VC-PAS-01`, pastillas de freno delanteras). La tarjeta explica qué incluye, para qué sirve y cuánto suma, con el precio del tarifario; no se sugiere si el mantenimiento ya lo incluye (p. ej. el de 40.000 km).
 - **Fuga de clientes**: clientes que dejan de hacer su postventa en la agencia y van a talleres externos.
 - **Retención**: proporción de clientes que siguen usando el postventa de la agencia.
 - **Sin stock**: repuesto agotado en inventario; el agente ofrece alternativas tras la reposición y abre un caso.
