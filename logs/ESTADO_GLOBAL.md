@@ -1,7 +1,7 @@
 # ESTADO GLOBAL · Postventa Agéntica
 > Solo el Orquestador escribe aquí (≤ 40 líneas). Para retomar: este archivo + `PLAN.md` §15.
 **Actualizado:** 2026-11-11 21:00 -05 · **Fase:** cierre (rama `ola-2-entrega`; `main` = GitHub, desplegado en Vercel) · **Entrega:** 23:00
-**Siguiente acción:** T17 · GIF en `entregables/` → ZIP → `unzip -l` → envío (usuario).
+**Siguiente acción:** envío (usuario): URL de la demo, repo y ZIP. Opcional fuera del sandbox: `npm run e2e`.
 **Usuario:** repo ✅ (About con descripción y temas) · Vercel ✅ https://postventa-agentica.vercel.app · pendiente: `npm run e2e` y evals con Gemini fuera del sandbox. **Negocio v1.1:** base VPN −49.816 USD sin payback 36 m; optimista payback 4 m.
 Estados: ⬜ PENDIENTE · 🔄 EN_CURSO · ✅ HECHA · ⚠️ ESCALADA · ⛔ BLOQUEADA · Int. = intentos fallidos (máx. 2)
 
@@ -30,11 +30,11 @@ Estados: ⬜ PENDIENTE · 🔄 EN_CURSO · ✅ HECHA · ⚠️ ESCALADA · ⛔ B
 | T22 | Toma de caso: mensajes del asesor, llamada, auditoría IA vs. humano | ALTO · opus (agente T20) | ✅ | 0 | vitest + e2e | 63efbe8 |
 | T15 | Revisión + coherencia | ALTO · opus · high | ✅ | 0 | code-review medium (5/8 corregidos) · check_coherence 5/5 · §11 | 156d2a0 · cc40831 |
 | T16 | Verificación en vivo | MEDIO · Orq. | ✅ | 0 | QA evaluador 30/30 (9 recorridos) · GitHub: diagramas 8/8 y 3/3 | 98de091 · f5807f6 |
-| T17 | Paquete final | BAJO · Orq. | 🔄 | 0 | unzip -l | |
+| T17 | Paquete final | BAJO · Orq. | ✅ | 0 | unzip -l: 237 entradas, 0 node_modules, solo .env.example | `git archive` de main |
 
 ## Checkpoints y entregables
 - [x] CP1 · [x] CP2 (merge + push) · [x] CP3 · [x] Batería §11 (477 tests, evals 32/32, build 0)
-- [x] URL · [x] Repo recreado · [x] PDF 2 págs · [x] XLSX · [x] Arquitectura + ADR 0009 · [x] Evals · [x] README profesional · [ ] GIF en repo · [ ] ZIP
+- [x] URL · [x] Repo recreado · [x] PDF 2 págs · [x] XLSX · [x] Arquitectura + ADR 0009 · [x] Evals · [x] README profesional · [x] GIF en repo · [x] ZIP (`entregables/ENTREGA_PostventaAgentica.zip`, fuera de git)
 
 ## Último error / escalado
 - Sandbox: sin sudo, red aislada, `.git/config` solo lectura → jsdom, WeasyPrint, `formulas`, `git -c user.email`; E2E, evals Gemini y recálculo Excel: usuario. Evals: S05 ya no es caso «no visto». · Aviso de hidratación en dev = extensión del navegador (`bis_skin_checked`), no la app. Login descartado (ADR 0006); Supabase/RAG = Fase 2 (ADR 0005).
