@@ -6,6 +6,8 @@ Agente de IA para el postventa de una agencia automotriz ficticia en Colombia (p
 
 **Demo:** https://postventa-agentica.vercel.app · **Repositorio:** https://github.com/JaimeUDistrital/postventa-agentica · **Resumen ejecutivo:** [PDF, 2 páginas](entregables/RESUMEN_EJECUTIVO_COMITE.pdf) · **Modelo financiero:** [Excel](entregables/MODELO_FINANCIERO_POSTVENTA_3Y.xlsx) · **Arquitectura:** [ARQUITECTURA_Y_SOLUCION.md](ARQUITECTURA_Y_SOLUCION.md)
 
+![Recorrido de la demo: camino feliz con paquete y cita confirmada, y pase a un asesor por síntoma crítico con «Tomar caso» y auditoría](entregables/demo_postventa.gif)
+
 ## Contenido
 
 1. [Para el evaluador: dónde está cada requisito](#para-el-evaluador-dónde-está-cada-requisito)
@@ -31,7 +33,7 @@ Agente de IA para el postventa de una agencia automotriz ficticia en Colombia (p
 | **C · Caso de negocio** a 3 años: escenarios, payback y sensibilidades | [Excel](entregables/MODELO_FINANCIERO_POSTVENTA_3Y.xlsx) (hojas `Caso_Negocio_Escenarios`, `Sensibilidad`, `Punto_Equilibrio`) y [PDF](entregables/RESUMEN_EJECUTIVO_COMITE.pdf) pág. 2 |
 | **C · Fuentes, supuestos y experimentos** para validarlos | [FUENTES_MERCADO.md](docs/investigacion/FUENTES_MERCADO.md), [data/assumptions.json](data/assumptions.json), hojas `Supuestos_y_Fuentes` y `Plan_Validacion` |
 | **D · Roadmap de 6 meses**, KPIs, cambio en el trabajo humano, gobierno y riesgos | [PDF](entregables/RESUMEN_EJECUTIVO_COMITE.pdf) pág. 2; [Arquitectura §11–13](ARQUITECTURA_Y_SOLUCION.md#11-kpis-por-capa) |
-| **01 · Prototipo:** journey clave con intervención visible del agente | [Demo](https://postventa-agentica.vercel.app): cliente «Mantenimiento 30.000 km» |
+| **01 · Prototipo:** journey clave con intervención visible del agente | [Demo](https://postventa-agentica.vercel.app): cliente «Mantenimiento 30.000 km»; recorrido grabado en [demo_postventa.gif](entregables/demo_postventa.gif) |
 | **01 · Al menos 2 caminos de falla** o excepción | Demo: síntoma crítico, repuesto sin stock, intento de manipulación y sin consentimiento (4 escenarios) |
 | **01 · Qué hace el agente, qué consulta y cuándo pasa el caso a una persona** | Paneles **Qué hizo el agente** y **Necesita su acción** (botón **Tomar caso**); [Arquitectura §5](ARQUITECTURA_Y_SOLUCION.md#5-handoff-por-síntoma-crítico) |
 | **02 · Resumen ejecutivo**, máximo 2 páginas | [RESUMEN_EJECUTIVO_COMITE.pdf](entregables/RESUMEN_EJECUTIVO_COMITE.pdf) |
@@ -303,7 +305,7 @@ prototipo/                   app Next.js
   scripts/                   sincronización de supuestos, coherencia de la entrega y QA en vivo
 modelo_financiero/           generador del Excel y tests (Python, uv)
 resumen_ejecutivo/           HTML, metadatos y generador del PDF
-entregables/                 PDF, Excel y financial_summary.json
+entregables/                 PDF, Excel, financial_summary.json y GIF de la demo
 data/                        assumptions.json: fuente única de supuestos
 docs/
   adr/                       9 decisiones de arquitectura
