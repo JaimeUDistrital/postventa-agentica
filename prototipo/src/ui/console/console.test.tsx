@@ -326,7 +326,9 @@ describe("funciones puras", () => {
       ({ state: "COTIZACION", mode, trace }) as unknown as AgentTurn;
     const items = resumirActividad([
       turn([ev("a", { kind: "llm", name: "planner.determinista", system: "LLM" }), ev("b", {}), ev("c", { system: "Tarifario" })]),
-      turn([ev("d", {}), ev("e", { kind: "llm", name: "planner.gemini", system: "LLM" })], "llm"),
+      // ADR 0009: con la IA activa, un turno que resolvió el motor de reglas no «consultó la IA».
+      turn([ev("r", { kind: "llm", name: "planner.ruta", system: "LLM" }), ev("s", { kind: "llm", name: "planner.determinista", system: "LLM" })], "llm"),
+      turn([ev("d", {}), ev("e", { kind: "llm", name: "gemini.generateContent", system: "LLM" })], "llm"),
       turn([ev("f", { kind: "policy", name: "politica_x", status: "blocked", system: "Guardián" })]),
     ]);
     expect(items.map((i) => [i.texto, i.veces])).toEqual([

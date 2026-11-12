@@ -60,12 +60,13 @@ export default function Home() {
         data-testid="console-grid"
         className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-[16rem_minmax(0,1fr)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)]"
       >
-        <ClientList session={session} className="min-w-0 md:col-span-2 xl:col-span-1 xl:min-h-0 xl:overflow-y-auto xl:p-1" />
+        {/* `relative` en las 3 columnas: lo absoluto de dentro (p. ej. textos `sr-only`) no escapa del recorte ni alarga la página. */}
+        <ClientList session={session} className="relative min-w-0 md:col-span-2 xl:col-span-1 xl:min-h-0 xl:overflow-y-auto xl:p-1" />
 
         <section
           id="conversacion"
           aria-label="Conversación y agenda del taller"
-          className="flex min-w-0 flex-col gap-2 xl:min-h-0 xl:overflow-y-auto xl:p-1"
+          className="relative flex min-w-0 flex-col gap-2 xl:min-h-0 xl:overflow-y-auto xl:p-1"
         >
           <div role="tablist" aria-label="Vista central" className="flex gap-1 border-b border-slate-200">
             {VISTAS.map(([v, texto]) => {
@@ -143,7 +144,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section aria-label="Panel del asesor" className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:p-1">
+        <section aria-label="Panel del asesor" className="relative flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:p-1">
           <AgentActivity turns={session.turns} cliente={cliente} loading={session.loading} />
           <AdvisorInbox cases={session.cases} onTake={session.takeCase} onReply={session.replyAsAdvisor} onCall={session.logCall} />
           <details className="group rounded-xl border border-slate-200 bg-white">

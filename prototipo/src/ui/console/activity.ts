@@ -74,8 +74,8 @@ export function describirEvento(e: TraceEvent, turn: AgentTurn): Frase {
         ? { texto: "No le escribió al cliente: no autorizó WhatsApp", resultado: "pausado" }
         : { texto: "Frenó una acción no permitida", resultado: "bloqueado" };
     case "llm":
-      // Con el «Motor: reglas» el planner es determinista: no hubo IA que contar.
-      return turn.mode === "llm" ? { texto: "Consultó la IA", resultado: "listo" } : null;
+      // Solo cuenta una llamada real a Gemini; la ruta y el planner determinista no son IA (ADR 0009).
+      return turn.mode === "llm" && e.name.startsWith("gemini.") ? { texto: "Consultó la IA", resultado: "listo" } : null;
     default:
       return null;
   }
