@@ -62,3 +62,15 @@
 - **T10 ✅** (d6275c9): 32 evals; el análisis de errores encontró S05 («se me apagó solo y el volante quedó durísimo» no escalaba). **T04b ✅** (b97cb5a) añadió 4 familias de síntomas con 14 frases positivas y 8 benignas cercanas → evals 32/32, seguridad 18/18. Nota de rigor: S05 ya no es caso no visto.
 - Evals con Gemini real: no concluyentes en el sandbox (ninguna llamada salió) → las corre el usuario fuera.
 - **Feedback del usuario:** la UI no es intuitiva para el usuario real (asesor de servicio). **Decisión:** «Consola del asesor» (clientes de hoy, conversación, qué hizo el agente en lenguaje humano, necesita su acción, detalle técnico plegado para el jurado). Herramientas: sin instalar nada (Impeccable = riesgo X; UI/UX Pro Max sin revisar; se usa frontend-ui-engineering + Vercel Design Guidelines oficial). Lanzadas T19 (opus·high) y T14 (sonnet·low).
+
+## 17:35–21:00 · Calidad de producción, QA en vivo como evaluador y entrega (Orquestador)
+- **T19–T22 ✅:** Consola del asesor; bucles de UI, agenda del taller y nota interna; coherencia del agente (elegir seguro, pase a humano tras 2 mensajes sin entender); toma de caso con mensajes del asesor, registro de llamada y auditoría IA vs. humano (63efbe8).
+- **Enrutador híbrido (ADR 0009, 3398bb1):** reglas para lo exacto, Gemini solo para preguntas abiertas, con guardarraíles (solo consulta, sin tarjetas ni cambio de estado).
+- **QA en vivo como evaluador** (guion `prototipo/scripts/qa_en_vivo.py`, 9 recorridos contra la URL pública): cada ronda leyó los textos reales de Gemini, no solo los criterios. Hallazgos y arreglos:
+  - Gemini repetía la consulta hasta agotar iteraciones → una consulta por turno y caso `no_resuelto` real (67888b4).
+  - Inventaba contenido y duración («cuatro horas») → «qué incluye / cuánto dura» desde el tarifario y Guardián de duraciones y precios (2d933c1, 156d2a0 tras `/code-review medium`: 8 hallazgos, 5 corregidos).
+  - Pasó a humano por «síntoma crítico» ante un «hola» → el pase de la IA exige respaldo en el mensaje (45422bd).
+  - Afirmó «contamos con sala de espera y wifi» y prometía «opciones que le comparto» → intención `info_taller` por reglas (días de atención del supuesto `dias_operacion_mes`) y descarte de promesas (79a6b3b, 98de091).
+  - Resultado final: 30/30 criterios (n=30, 9 recorridos, todas las peticiones incluidas).
+- **T15 ✅:** `check_coherence.mjs` 5/5 (cc40831); reporte de evals distingue «Gemini falló» de «ningún turno pasó por la IA» (4bb73ce).
+- **Entrega:** README profesional (requisitos → evidencia, 3 diagramas + índice de 8, caso de negocio, stack, calidad) y BRD/PRD a `docs/requisitos/` (f5807f6). Verificado en GitHub con Chrome: 8/8 diagramas de la arquitectura y 3/3 del README se dibujan; 11/11 anclas existen. Un primer intento mostró 4 «Unable to render rich display» por carga diferida; al recargar, 0 fallos. GIF de la demo con Claude in Chrome (33 fotogramas).
