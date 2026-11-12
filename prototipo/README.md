@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prototipo · Consola del asesor de postventa
 
-## Getting Started
+App Next.js del agente de postventa: interfaz de la consola del asesor y API `POST /api/agent`. La visión general, los diagramas y el caso de negocio están en el [README principal](../README.md) y en [ARQUITECTURA_Y_SOLUCION.md](../ARQUITECTURA_Y_SOLUCION.md).
 
-First, run the development server:
+Demo pública: https://postventa-agentica.vercel.app
+
+## Correr
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables de entorno: copia [.env.example](.env.example) a `.env.local`. Sin `GEMINI_API_KEY` la demo funciona con el motor de reglas.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run typecheck` | TypeScript estricto (`tsc --noEmit`) |
+| `npm test` | Tests unitarios y de integración (vitest) |
+| `npm run evals` | Evals del agente; regenera [evals/REPORTE_EVALS.md](evals/REPORTE_EVALS.md) |
+| `npm run check:fixtures` | Coherencia de los datos ficticios |
+| `npm run check:assumptions:final` | Supuestos con fuente, en modo estricto |
+| `npm run e2e` | Pruebas Playwright en un navegador real |
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/          página principal y API route POST /api/agent
+  core/         núcleo sin Next ni React (se prueba sin interfaz)
+    agent/      orquestador, enrutador híbrido, planner de reglas, planner Gemini, prompts y sesión
+    guardrails/ Guardián determinista de entrada y salida
+    tools/      herramientas tipadas: contexto, stock y precio, agenda, seguros, escalar
+    ports/      interfaces hacia CRM, inventario, tarifario, taller y aseguradoras
+    adapters/   adaptadores mock (datos ficticios en memoria)
+    contracts/  esquemas Zod del dominio, las herramientas y la API
+    data/       fixtures y escenarios de la demo
+    config/     política y supuestos (copia de ../data/assumptions.json)
+    audit/      auditoría por cliente
+  ui/           consola: vista del propietario, asesor, agenda, auditoría, Rayos X y demo guiada
+evals/          casos, arnés y reporte
+e2e/            pruebas Playwright
+checks/         coherencia de fixtures y supuestos
+scripts/        sincronización de supuestos y coherencia de la entrega
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Las decisiones de diseño están en [docs/adr](../docs/adr/README.md).
