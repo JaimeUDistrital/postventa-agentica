@@ -89,16 +89,16 @@ def grafico_vpn(S):
 
 def tabla_negocio(S):
     filas = [
-        ("Inversión inicial (USD)", lambda s: usd(s["inversion"])),
-        ("Beneficio neto 3 años (USD)", lambda s: usd(s["beneficio_3y"])),
-        ("VPN a 3 años (USD)", lambda s: usd(s["vpn"])),
+        ("Inversión inicial", lambda s: usd(s["inversion"])),
+        ("Beneficio neto en 3 años", lambda s: usd(s["beneficio_3y"])),
+        ("Valor presente neto (VPN)", lambda s: usd(s["vpn"])),
         ("Payback (meses)", lambda s: payback(s["payback_meses"])),
-        ("ROI a 3 años", lambda s: roi(s["roi_3y"])),
+        ("Retorno sobre la inversión (ROI)", lambda s: roi(s["roi_3y"])),
     ]
-    h = "<table class='t'><tr><th style='width:38%'></th>" + "".join(f"<th>{NOMBRE[k]}</th>" for k in ESC) + "</tr>"
+    h = "<table class='t'><tr><th style='width:42%'>USD</th>" + "".join(f"<th>{NOMBRE[k]}</th>" for k in ESC) + "</tr>"
     for nom, f in filas:
         h += f"<tr><td>{e(nom)}</td>" + "".join(f"<td class='n'>{e(f(S[k]))}</td>" for k in ESC) + "</tr>"
-    return h + "</table><p class='peq'>\u00ab> 36\u00bb = no recupera la inversi\u00f3n en 36 meses.</p>"
+    return h + "</table><p class='peq'>Payback: meses hasta recuperar la inversi\u00f3n. \u00ab> 36\u00bb = no la recupera en 36 meses.</p>"
 
 
 def construir():
@@ -122,16 +122,12 @@ def construir():
 
     ok_op = b["citas_mes_actuales"] >= b["citas_mes_equilibrio_operativo"]
     lectura = (
-        f"En el base el embudo genera <b>{num1(b['citas_mes_actuales'])} citas/mes</b> en régimen (mes 36) frente a "
-        f"<b>{num1(b['citas_mes_equilibrio_operativo'])}</b> de equilibrio operativo: "
-        + ("cubre su costo mensual, pero con poco margen. " if ok_op else "no cubre su costo mensual. ")
-        + f"Recuperar la inversión en 24 meses exige <b>{num1(b['citas_mes_payback_24'])} citas/mes</b>, "
-        f"equivalente a <b>{num1(b['sedes_equivalentes'])} sedes</b> como la modelada. "
-        "<b>Conclusión: el caso base no se paga solo en 36 meses; el éxito depende de que la retención y la conversión "
-        "reales se acerquen al escenario optimista, y hoy no están medidas.</b> "
-        f"Optimista: equilibrio en {num1(S['optimista']['citas_mes_equilibrio_operativo'])} citas/mes frente a "
-        f"{num1(S['optimista']['citas_mes_actuales'])} generadas. "
-        f"Pesimista: {num1(S['pesimista']['citas_mes_equilibrio_operativo'])} frente a {num1(S['pesimista']['citas_mes_actuales'])}."
+        f"<p>En el escenario base, el asistente generaría unas <b>{num1(b['citas_mes_actuales'])} citas adicionales al mes</b> al final del tercer año. "
+        + (f"Eso cubre su costo mensual, con poco margen (el punto de equilibrio es {num1(b['citas_mes_equilibrio_operativo'])} citas), pero no recupera la inversión: "
+           if ok_op else f"Eso no cubre su costo mensual (el punto de equilibrio es {num1(b['citas_mes_equilibrio_operativo'])} citas) ni recupera la inversión: ")
+        + f"para recuperarla en 24 meses harían falta <b>{num1(b['citas_mes_payback_24'])} citas al mes</b>, el volumen de unas {num1(b['sedes_equivalentes'])} sedes como la modelada.</p>"
+        "<p>El resultado depende de dos datos que hoy no están medidos: cuántos clientes vuelven al taller y cuántos responden al mensaje. "
+        f"Si se acercan al escenario optimista, la inversión se recupera en {payback(S['optimista']['payback_meses'])} meses; si se parecen al pesimista, el proyecto no es viable.</p>"
     )
 
     v = dict(
@@ -154,9 +150,9 @@ def construir():
     return Template(PLANTILLA).substitute(v)
 
 
-PLANTILLA = """<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Resumen ejecutivo - Postventa agéntica</title>
+PLANTILLA = """<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Resumen ejecutivo - Postventa con IA</title>
 <style>
-@page { size: Letter; margin: 0.42in 0.5in 0.42in 0.5in; @bottom-center { content: "Postventa agéntica · Resumen para el comité · pág. " counter(page) " de " counter(pages); font: 8.5pt $css_font; color:#333 } }
+@page { size: Letter; margin: 0.42in 0.5in 0.42in 0.5in; @bottom-center { content: "Postventa con IA · Propuesta al comité · pág. " counter(page) " de " counter(pages); font: 8.5pt $css_font; color:#333 } }
 * { box-sizing: border-box; }
 body { font: 8.6pt/1.28 $css_font; color:#111; margin:0; }
 h1 { font-size: 15pt; margin:0 0 1pt 0; }
@@ -174,84 +170,77 @@ table.t td.c { text-align:left; }
 </style></head><body>
 
 <div class="pg">
-<h1>Postventa agéntica: retener al cliente después de la garantía</h1>
-<div class="sub">Agencia automotriz multimarca (caso ficticio) · Colombia · Resumen para el comité directivo · Supuestos v$vers ($fecha) · USD</div>
+<h1>Postventa con IA: que el cliente vuelva al taller después de la garantía</h1>
+<div class="sub">Propuesta al comité directivo · Agencia multimarca en Colombia (caso ficticio) · Cifras en USD, supuestos v$vers del $fecha</div>
 
-<h2>1. Problema</h2>
-<p>La agencia pierde al cliente cuando se acaba la garantía: mantenimiento, seguros y recompra se van a talleres de barrio y aseguradoras externas, y las bahías quedan vacías entre semana. La postventa es <b>reactiva</b> (espera a que el auto falle) y la comunicación es spam genérico, sin kilometraje ni momento de vida.
-Referencia externa (EE. UU., no Colombia): los concesionarios perdieron $perdida % de sus visitas de servicio frente a la competencia desde 2018 y solo $vuelve % de los dueños de autos de hasta 2 años vuelve al concesionario que se lo vendió ($antes % en 2023) (Cox Automotive, F04).
-En Colombia <b>no hay dato público de retención</b>: usamos $ret_a como retención actual del segmento (cifra del brief, sin medir) y es la primera cosa que hay que validar.</p>
+<div class="caja"><b>Lo que pedimos:</b> aprobar un piloto de 6 meses en una sede para comprobar si un asistente por WhatsApp logra que más clientes vuelvan al taller. No pedimos el despliegue en toda la red: con las cifras de hoy, el escenario base no recupera la inversión en 3 años, y los dos datos que deciden el caso no están medidos. El piloto sirve para medirlos.</div>
 
-<h2>2. Usuarios priorizados y segmento</h2>
+<h2>1. El problema</h2>
+<p>Cuando termina la garantía, la agencia pierde al cliente. El mantenimiento, el SOAT y la siguiente compra se van a talleres independientes y a aseguradoras externas, y las bahías del taller quedan vacías entre semana. Hoy la postventa espera a que el cliente llame, y los mensajes que se envían son genéricos: no tienen en cuenta el kilometraje ni la historia del vehículo.</p>
+<p>En Estados Unidos, solo el $vuelve % de los dueños de carros de hasta 2 años vuelve al concesionario que se lo vendió; en 2023 era el $antes % (Cox Automotive). En Colombia no hay un dato público equivalente. El brief indica una retención del $ret_a, y es lo primero que el piloto debe confirmar.</p>
+
+<h2>2. Segmento: a quién servimos primero</h2>
+<p>Propietarios de vehículos de 2 a 5 años, entre 20.000 y 60.000 km. Es el momento en que vence la garantía de fábrica y el cliente empieza a buscar talleres más baratos. En el parque modelado son unos <b>$seg vehículos</b> ($pct_seg de $parque); la cifra real se toma del sistema de gestión de la agencia.</p>
+
+<h2>3. Propuesta de valor</h2>
+<ul>
+<li><b>Propietario:</b> recibe un aviso solo cuando su carro lo necesita, con el precio del tarifario y la cita agendada en el mismo chat.</li>
+<li><b>Asesor de servicio:</b> deja de atender llamadas repetitivas. Recibe citas confirmadas y, cuando un caso lo requiere, un resumen para atenderlo.</li>
+<li><b>Jefe de taller:</b> ocupa las bahías en las horas de menos demanda, sin sobrecargar las horas pico.</li>
+<li><b>Gerencia:</b> mide retención y margen mes a mes, con datos propios.</li>
+</ul>
+
+<h2>4. Ecosistema y prioridades</h2>
+<p>El asistente habla con el cliente por WhatsApp y trabaja sobre los sistemas que ya tiene la agencia: CRM, inventario de repuestos, tarifario y agenda del taller. Las aseguradoras aliadas se suman en una etapa posterior.</p>
 <ol style="margin:0 0 2pt 0;padding-left:13pt">
-<li><b>Propietario</b> del segmento: quiere aviso solo cuando su auto lo necesita, precio claro y reserva en un clic.</li>
-<li><b>Asesor de servicio</b>: deja de responder lo repetitivo; recibe citas confirmadas y casos con contexto.</li>
-<li><b>Jefe de taller</b>: llenar bahías en valle sin saturarlas.</li>
-<li><b>Comité directivo</b> (decide y paga): retención y margen medibles a 3 años.</li>
-</ol>
-<p><b>Segmento de entrada:</b> vehículos de <b>2 a 5 años</b> (20.000–60.000 km), justo cuando salen de la garantía inicial y el cliente se va por precio o desconfianza. Con el parque modelado ($parque vehículos, $pct_seg en ese rango) son unos <b>$seg vehículos</b> (supuesto propio, a validar con el DMS).</p>
-
-<h2>3. Ecosistema y journey: qué primero y por qué</h2>
-<p><b>Ciclo:</b> entrega → garantía (años 0–2) → <b>años 2–5 (MVP)</b> → renovación y recompra (años 4–5). <b>Canales:</b> WhatsApp Business, web/app y asesor. <b>Aliados:</b> aseguradoras, llantas y baterías, financiera. <b>Sistemas:</b> CRM, inventario de repuestos, agenda de bahías y tarifario.</p>
-<ol style="margin:0 0 2pt 0;padding-left:13pt">
-<li><b>Primero: mantenimiento preventivo por kilometraje</b> (con cotización cerrada, stock verificado y bahía reservada). Es el punto de mayor fuga, su disparador (km estimado e historial) es el dato más fiable y llena bahías de forma recurrente.</li>
-<li><b>Segundo: paquete de desgaste en la misma visita</b> (frenos, llantas, batería): casi no cuesta captarlo si el cliente ya viene.</li>
-<li><b>Después:</b> SOAT y póliza (dependen de integraciones con aseguradoras), garantía (riesgo legal: el agente solo escala) y recompra (falta historial).</li>
+<li><b>Primero, el mantenimiento por kilometraje.</b> Es donde más clientes se pierden. El kilometraje estimado es el dato más confiable para saber cuándo escribir, y cada cita ocupa una bahía.</li>
+<li><b>Segundo, el paquete de desgaste en la misma visita</b> (frenos, batería, llantas). Se ofrece cuando el cliente ya viene, así que cuesta poco venderlo.</li>
+<li><b>Después:</b> SOAT y pólizas, que requieren integrar a las aseguradoras; garantías, que tienen riesgo legal y por eso el asistente solo las pasa a una persona; y recompra del vehículo, para la que aún falta historial.</li>
 </ol>
 
-<h2>4. Solución agéntica</h2>
+<h2>5. Solución agéntica</h2>
+<p>Cuatro agentes con funciones separadas. La IA entiende al cliente y redacta las respuestas; los precios, las reservas y las reglas de seguridad los calcula un código fijo que la IA no puede cambiar.</p>
 <table class="t">
-<tr><th style="width:17%">Agente</th><th style="width:43%">Qué hace</th><th>Autonomía</th></tr>
-<tr><td><b>Proactivo</b></td><td>Detecta el vehículo cerca de su hito de km y propone el contacto.</td><td>Informa; solo contacta con consentimiento.</td></tr>
-<tr><td><b>Postventa</b></td><td>Conversa por WhatsApp: precio del tarifario, stock, reserva de bahía, apartado de repuesto.</td><td>Informa y recomienda; <b>ejecuta la reserva solo con confirmación explícita</b> del cliente.</td></tr>
-<tr><td><b>Guardián</b></td><td>Revisa antes y después de cada turno: inyección de instrucciones, fraude, PII, síntomas críticos, precios.</td><td>Determinista, sin LLM; el LLM no puede anularlo.</td></tr>
-<tr><td><b>Copiloto</b></td><td>Resume el caso para el asesor humano y sugiere el siguiente paso.</td><td>Solo resume; no habla con el cliente.</td></tr>
+<tr><th style="width:15%">Agente</th><th style="width:31%">Qué hace</th><th style="width:25%">Qué decide solo</th><th>Qué no puede hacer</th></tr>
+<tr><td><b>Proactivo</b></td><td>Detecta los vehículos que se acercan a su mantenimiento y prepara el primer mensaje.</td><td>Informar.</td><td>Escribir a quien no autorizó el contacto, ni más de $maxc vez al mes.</td></tr>
+<tr><td><b>Asistente de postventa</b></td><td>Conversa por WhatsApp: cotiza, revisa repuestos y agenda.</td><td>Informar, recomendar y reservar la cita cuando el cliente la confirma.</td><td>Inventar precios, dar descuentos de más del $tope, diagnosticar fallas o aprobar garantías.</td></tr>
+<tr><td><b>Guardián</b></td><td>Revisa cada mensaje antes y después de la IA.</td><td>Bloquear, ocultar datos personales y pasar el caso a una persona.</td><td>Ser desactivado por la IA: no usa IA.</td></tr>
+<tr><td><b>Copiloto del asesor</b></td><td>Resume el caso para la persona que lo toma.</td><td>Sugerir el siguiente paso.</td><td>Hablar con el cliente.</td></tr>
 </table>
-<p><b>Límites y controles:</b> opt-in obligatorio (Ley 1581 de 2012) y máximo $maxc contacto cada 30 días; descuento automático tope $tope; reserva con hold de $hold min y clave de idempotencia (no se duplica); datos personales (PII) enmascarados antes del modelo y de la traza; <b>handoff</b> (traspaso) a un asesor humano, con todo el contexto, ante falla mecánica grave, garantía, falta de stock, cliente molesto o intento de manipulación. Cada paso deja una traza auditable.</p>
-<p class="peq"><b>Demo:</b> $url_demo · <b>Código:</b> $url_repo</p>
+<p><b>Controles.</b> Solo se escribe a quien autorizó el contacto (Ley 1581 de 2012). Los precios salen siempre del tarifario. La cita se aparta $hold minutos, nunca se reserva dos veces y solo se confirma cuando el cliente lo dice. Los datos personales se ocultan antes de llegar a la IA. El caso pasa a una persona ante síntomas de riesgo (frenos, humo, testigos en rojo), garantías, repuestos agotados, clientes molestos o intentos de manipulación. Cada decisión queda registrada para auditoría.</p>
+<p class="peq"><b>Prototipo:</b> $url_demo · <b>Código:</b> $url_repo</p>
 </div>
 
 <div class="fin">
-<h1>Caso de negocio y decisión solicitada</h1>
-<div class="sub">3 escenarios a 36 meses (ene-2027 a dic-2029) · USD (TRM base $trm COP/USD) · cifras del modelo financiero, supuestos v$vers</div>
-
+<h2 style="margin-top:0">6. Valor esperado e inversión</h2>
+<p class="peq">Modelo financiero a 36 meses (enero de 2027 a diciembre de 2029), tres escenarios. Cifras en USD, con una tasa de cambio de $trm pesos por dólar.</p>
 <div class="dos">
 <div style="flex:1.45">$tabla</div>
 <div style="flex:0 0 235pt;padding-top:1pt">$grafico</div>
 </div>
-
-<h2>Lectura honesta del punto de equilibrio</h2>
 <div class="caja">$lectura</div>
+<p>El costo de la IA es bajo: USD $ia_b por conversación en el escenario base, más USD $wa_b de WhatsApp. No es lo que decide el caso; lo deciden la retención y la respuesta de los clientes.</p>
 
-<h2>Costo de IA por conversación</h2>
-<p>Modelo de lenguaje: USD $ia_o (optimista) / <b>$ia_b (base)</b> / $ia_p (pesimista) por conversación, más USD $wa_b de WhatsApp en el base (precios de lista de Google y Meta; tokens por conversación supuestos, a medir en el piloto). Es un costo marginal pequeño frente a la inversión; lo que decide el caso es la retención y la conversión, no la IA.</p>
-
-<h2>Recomendación</h2>
-<p><b>Piloto acotado en 1 sede, 6 meses, con compuertas de go/no-go medibles.</b> No escalar a varias sedes salvo que se validen conversión y retención con datos propios. Con lo conocido hoy, aprobar el despliegue completo sería apostar sobre supuestos sin medir.</p>
-
-<div class="dos">
-<div>
-<h2>Roadmap de 6 meses y compuertas</h2>
+<h2>7. Principales riesgos</h2>
 <ul>
-<li><b>Mes 1:</b> línea base en el DMS (retención real, ticket, margen) + campaña de autorización. <b>Compuerta 1:</b> opt-in ≥ $g_optin y retención real consistente con el modelo; si no, recalcular o parar.</li>
-<li><b>Meses 2–3:</b> integrar un sistema a la vez (CRM, luego taller) y afinar el agente con evals.</li>
-<li><b>Meses 3–5:</b> piloto con grupo de control. <b>Compuerta 2:</b> respuesta ≥ $g_resp, respuesta→cita ≥ $g_conv, no-show ≤ $g_nos_v.</li>
-<li><b>Mes 6:</b> <b>Compuerta 3:</b> la retención del grupo atendido avanza hacia la meta mínima de $g_ret (hoy $ret_a) y el margen por cita cubre el equilibrio operativo. Si pasa, propuesta de escalado; si no, se cierra.</li>
+<li><b>Retención y respuesta sin medir.</b> El primer mes del piloto mide la línea base real antes de seguir invirtiendo.</li>
+<li><b>Consentimiento y datos personales.</b> Solo se escribe con autorización y los datos se ocultan antes de llegar a la IA.</li>
+<li><b>Que la IA invente un precio o una promesa.</b> Los precios salen del tarifario y el Guardián bloquea lo que no viene de los sistemas.</li>
+<li><b>Integración más difícil que en el prototipo.</b> Se conecta un sistema a la vez: primero el CRM, después la agenda del taller.</li>
+<li><b>Baja adopción de los asesores.</b> Reciben citas confirmadas y casos resumidos, y revisan cada semana cómo respondió el asistente.</li>
 </ul>
-<p class="peq">Umbrales = valor del escenario pesimista de cada supuesto.</p>
-</div>
-<div>
-<h2>KPIs, equipo y riesgos</h2>
-<ul>
-<li><b>KPIs:</b> opt-in, respuesta, conversión a reserva, no-show, ocupación de bahías en valle, margen incremental por visita, costo de IA por conversación, retención en taller, precio distinto del tarifario (meta 0).</li>
-<li><b>Asesores:</b> dejan lo repetitivo; reciben citas confirmadas y casos con contexto (garantías, síntomas de seguridad, falta de stock); revisión semanal de trazas.</li>
-<li><b>Riesgos:</b> supuestos sin medir (retención, respuesta); consentimiento y datos personales; precios o promesas inventadas por el LLM (el Guardián valida contra tarifario); integración real más difícil que la simulada; adopción del asesor.</li>
-</ul>
-</div>
-</div>
 
-<div class="caja"><b>Decisión solicitada al comité:</b> aprobar el piloto de 6 meses en 1 sede con las 3 compuertas anteriores y reservar la decisión de escalar hasta la compuerta 3. El costo del piloto no está calculado en el modelo; se acota al mínimo del equipo y la integración con CRM y taller, y se define con el comité.</div>
-<p class="peq"><b>Declaración de uso de IA:</b> esta solución y este documento se construyeron con asistentes de IA bajo supervisión humana; las cifras tienen fuente o son supuestos declarados (ver <i>FUENTES_MERCADO.md</i> y el modelo financiero). La agencia y los datos del prototipo son ficticios.</p>
+<h2>8. Plan de 6 meses y decisión solicitada</h2>
+<ul>
+<li><b>Mes 1:</b> medir la retención, el ticket y el margen reales, y pedir a los clientes autorización de contacto. <b>Se continúa si</b> acepta al menos el $g_optin y la retención real se parece a la del modelo; si no, se recalcula o se detiene.</li>
+<li><b>Meses 2 y 3:</b> conectar el CRM y luego la agenda del taller, y ajustar el asistente con conversaciones reales.</li>
+<li><b>Meses 3 a 5:</b> piloto con un grupo de control. <b>Se continúa si</b> responde al menos el $g_resp, agenda al menos el $g_conv de quienes responden y las citas perdidas no pasan del $g_nos_v.</li>
+<li><b>Mes 6:</b> se propone escalar solo si la retención del grupo atendido sube hacia el $g_ret (hoy $ret_a) y el margen por cita cubre el costo de operación. Si no, el piloto se cierra.</li>
+</ul>
+<p class="peq">Los umbrales son los valores del escenario pesimista. Indicadores de seguimiento: autorizaciones, respuesta, citas agendadas, inasistencias, ocupación de bahías, margen por visita, costo de IA por conversación, retención y precios distintos del tarifario (meta: cero).</p>
+
+<div class="caja"><b>Decisión solicitada:</b> aprobar el piloto de 6 meses en una sede, con las tres compuertas anteriores, y decidir si se escala al terminar el mes 6. El presupuesto del piloto no está en el modelo financiero; se acuerda con el comité y cubre el equipo mínimo y la conexión con el CRM y la agenda del taller.</div>
+<p class="peq">La agencia y los datos son ficticios. Este documento y el prototipo se construyeron con asistentes de IA, con supervisión y revisión humana; cada cifra tiene fuente o es un supuesto declarado en el modelo financiero.</p>
 </div>
 </body></html>"""
 
