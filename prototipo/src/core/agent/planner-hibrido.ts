@@ -8,6 +8,7 @@
  */
 import type { HandoffReason, ToolName } from "@/core/contracts";
 import type { Planner, PlannerInput, PlannerResult } from "@/core/ports";
+import { normalizar } from "./intencion";
 import { fueraDeReglas, plannerDeterminista } from "./planner-determinista";
 import { evento } from "./trace";
 
@@ -73,6 +74,22 @@ const eventoHerramienta = (tool: ToolName) =>
     payload: { tool },
   });
 
+/** Duración («cuatro horas», «3 días») o precio («$ 200.000», «150.000 pesos») afirmados en texto libre. */
+const DATO_NO_VERIFICADO =
+  /\b(?:\d+(?:[.,]\d+)?|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|media|medio)\s+(?:horas?|minutos?|dias?|semanas?)\b|\$\s?\d|\b\d[\d.,]*\s*(?:pesos|cop|usd|dolares)\b/;
+const TEXTO_SIN_DATO =
+  "Ese dato no lo tengo confirmado en el sistema. Puedo mostrarle la cotización, agendar su cita o pasarle con un asesor (escriba «asesor»).";
+
+const eventoDatoNoVerificado = () =>
+  evento({
+    kind: "policy",
+    agent: "Guardián",
+    name: "ia.dato_no_verificado",
+    system: "Guardián",
+    status: "blocked",
+    detalle: "La IA afirmó una duración o un precio que no viene de una herramienta: se reemplazó por un texto seguro.",
+  });
+
 const conTraza = (r: PlannerResult, antes: PlannerResult["trace"] = []): PlannerResult => ({
   ...r,
   trace: [...antes, ...(r.trace ?? [])],
@@ -105,7 +122,11 @@ export function createPlannerHibrido(ia: Planner, reglas: Planner = plannerDeter
         const deReglas = await reglas.next(input);
         return conTraza(deReglas, [...traza, ...(r.trace ?? []), eventoDescarte(handoff.motivo)]);
       }
-      return conTraza({ ...r, step: { ...r.step, nextState: input.session.state, showCards: [] } }, traza);
+      // Duraciones y precios solo salen de herramientas verificadas: si la IA los afirma, no se envían.
+      const inventado = !handoff && DATO_NO_VERIFICADO.test(normalizar(r.step.text));
+      const text = inventado ? TEXTO_SIN_DATO : r.step.text;
+      const trace = [...(r.trace ?? []), ...(inventado ? [eventoDatoNoVerificado()] : [])];
+      return conTraza({ ...r, trace, step: { ...r.step, text, nextState: input.session.state, showCards: [] } }, traza);
     },
   };
 }

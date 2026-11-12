@@ -50,6 +50,7 @@ export const verificarStock: Handler<"verificar_stock_y_precio"> = async (ctx, i
       todosDisponibles: sinStock === 0,
       cotizacion: b.quote,
       ventaCruzadaSugerida: b.ventaCruzadaSugerida,
+      duracionHoras: b.duracionHoras,
     },
     summaries: [
       {

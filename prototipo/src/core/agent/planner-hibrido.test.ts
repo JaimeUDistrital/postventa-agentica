@@ -82,11 +82,12 @@ describe("elegirRuta", () => {
     ["aún sin cotización", { message: "¿qué incluye?", quoteId: null }, "reglas"],
     ["mensaje vacío", { message: "   " }, "reglas"],
     ["elige un seguro ya mostrado", { message: "la 2", agenteDijo: TEXTO_SEGUROS }, "reglas"],
-    ["pregunta abierta tras la cotización", { message: "¿qué le hacen al carro en ese mantenimiento?" }, "ia"],
-    // QA en vivo: «cuánto tiempo» no es una pregunta de precio.
-    ["«¿cuánto tiempo se demora?»", { message: "¿Cuánto tiempo se demora el servicio?" }, "ia"],
-    ["«¿cuánto se demora?»", { message: "¿cuánto se demora?" }, "ia"],
-    ["«¿cuánto dura?»", { message: "¿Cuánto dura el mantenimiento?" }, "ia"],
+    ["pregunta abierta tras la cotización", { message: "¿Tienen sala de espera con wifi?" }, "ia"],
+    // QA en vivo: Gemini inventaba qué incluye y cuánto dura; ahora lo responden las reglas con el tarifario.
+    ["«¿qué le hacen al carro?» (detalle del tarifario)", { message: "¿qué le hacen al carro en ese mantenimiento?" }, "reglas"],
+    ["«¿cuánto tiempo se demora?»", { message: "¿Cuánto tiempo se demora el servicio?" }, "reglas"],
+    ["«¿cuánto se demora?»", { message: "¿cuánto se demora?" }, "reglas"],
+    ["«¿cuánto dura?»", { message: "¿Cuánto dura el mantenimiento?" }, "reglas"],
     ["«¿cuánto cuesta?» sigue siendo precio", { message: "¿cuánto cuesta?" }, "reglas"],
     ["«¿cuánto me costó?» sigue siendo precio", { message: "¿cuánto me costó al final?" }, "reglas"],
     ["saludo tras la cotización", { message: "hola" }, "ia"],
@@ -112,13 +113,13 @@ describe("createPlannerHibrido", () => {
 
   it("ruta IA: solo le ofrece herramientas de consulta", async () => {
     const ia = iaFalsa();
-    await createPlannerHibrido(ia.planner).next(entrada({ message: "¿qué incluye?" }));
+    await createPlannerHibrido(ia.planner).next(entrada({ message: "¿Tienen sala de espera?" }));
     expect(ia.next).toHaveBeenCalledTimes(1);
     expect(ia.next.mock.calls[0][0].allowedTools).toEqual(["consultar_contexto_vehiculo"]);
   });
 
   it("ruta IA: responde en texto, sin tarjetas y sin mover el estado", async () => {
-    const r = await createPlannerHibrido(iaFalsa().planner).next(entrada({ message: "¿qué incluye?" }));
+    const r = await createPlannerHibrido(iaFalsa().planner).next(entrada({ message: "¿Tienen sala de espera?" }));
     expect(r.step).toEqual({
       kind: "final",
       text: "El mantenimiento de 20.000 km incluye cambio de aceite, filtros y revisión general.",
@@ -192,6 +193,25 @@ describe("createPlannerHibrido", () => {
     const r = await createPlannerHibrido(iaFalsa(paso).planner).next(yaConsultado);
     expect(r.step.kind).toBe("final");
     expect(r.trace?.some((e) => e.name === "ia.herramienta_descartada")).toBe(true);
+  });
+
+  it.each([
+    ["duración inventada", "El servicio toma unas cuatro horas en el taller."],
+    ["duración con cifra", "Se demora 3 horas aproximadamente."],
+    ["precio inventado", "Eso le cuesta $ 200.000 adicionales."],
+    ["precio en pesos", "Son 150.000 pesos más."],
+  ])("ruta IA: %s se reemplaza por un texto seguro (guardarraíl de datos no verificados)", async (_n, texto) => {
+    const r = await createPlannerHibrido(iaFalsa(responder({ text: texto })).planner).next(entrada({ message: "hola" }));
+    const final = r.step as Extract<PlannerStep, { kind: "final" }>;
+    expect(final.text).not.toBe(texto);
+    expect(final.text).toContain("no lo tengo confirmado");
+    expect(r.trace?.some((e) => e.name === "ia.dato_no_verificado" && e.status === "blocked")).toBe(true);
+  });
+
+  it("ruta IA: un texto sin cifras de duración ni precio pasa tal cual", async () => {
+    const texto = "Sí, tenemos sala de espera. ¿Le ayudo a agendar su mantenimiento de 30.000 km?";
+    const r = await createPlannerHibrido(iaFalsa(responder({ text: texto })).planner).next(entrada({ message: "hola" }));
+    expect((r.step as Extract<PlannerStep, { kind: "final" }>).text).toBe(texto);
   });
 
   it("ruta IA: de una mezcla, solo sigue la herramienta de consulta", async () => {

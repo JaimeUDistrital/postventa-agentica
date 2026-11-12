@@ -9,6 +9,7 @@ export type Intencion =
   | "agendar"
   | "confirmar"
   | "seguros"
+  | "detalle"
   | "asesor"
   | "otro";
 
@@ -29,6 +30,8 @@ const REGLAS: readonly [Intencion, RegExp][] = [
     /\b(asesor|humano|una persona|molest|queja|enojad|furios)|\b(?:pueden|puede|podrian|podria)\s+(?:me\s+)?(?:llamar|contactar)\b|\b(?:quiero|necesito)\s+que\s+me\s+(?:llamen|contacten|llame|contacte)\b/,
   ],
   ["confirmar", /\bconfirm/],
+  // QA en vivo: qué incluye y cuánto dura salen del tarifario (la IA los inventaba).
+  ["detalle", /(que (?:me |le )?(?:incluye|trae|hacen|revisan|cambian)|en que consiste|cuanto (?:tiempo|se demora|se tarda|demora|dura|tarda)|duracion)/],
   ["rechazar_venta_cruzada", /\bno (gracias|quiero|me interesa)\b|\bsin (el )?paquete\b/],
   ["venta_cruzada", /(freno|pastilla|bateria|llanta|alineac|balanceo|agregue|agrega|anad)/],
   ["seguros", /\b(seguro|seguros|soat|poliza)\b/],

@@ -189,3 +189,20 @@ describe("QA en vivo · el planner agota sus pasos sin respuesta final", () => {
     expect(t.state).toBe("HANDOFF");
   });
 });
+
+describe("QA en vivo · qué incluye y cuánto dura salen del tarifario (no de la IA)", () => {
+  it("«¿qué le revisan?» responde con la descripción y la duración del tarifario, sin tarjetas ni cambio de estado", async () => {
+    const [, t] = await conversar("feliz", [INICIO, msg("¿Qué le revisan al carro en ese mantenimiento?")]);
+    expect(t.reply.text).toContain("bujías de iridio");
+    expect(t.reply.text).toContain("2 h");
+    expect(t.reply.cards).toEqual([]);
+    expect(t.state).toBe("COTIZACION");
+    expect(t.handoff).toBeUndefined();
+  });
+
+  it("con el paquete agregado, la duración suma la del paquete (2 h + 1 h)", async () => {
+    const [, , t] = await conversar("feliz", [INICIO, acc("agregar_venta_cruzada"), msg("¿Cuánto tiempo se demora el servicio?")]);
+    expect(t.reply.text).toContain("3 h");
+    expect(t.reply.text).toContain("pastillas de freno");
+  });
+});

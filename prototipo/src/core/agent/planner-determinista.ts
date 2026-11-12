@@ -8,6 +8,7 @@ import {
   AgendarBahiaOutput,
   ConsultarContextoOutput,
   CotizarSegurosOutput,
+  VerificarStockOutput,
   type InsuranceOffer,
   type ToolName,
   type ToolResult,
@@ -186,6 +187,26 @@ function agendar(input: PlannerInput, params: QuoteParams, confirmar: boolean): 
   return final(input, "Ese horario ya no está disponible; estas son las franjas libres más cercanas.", ["alternativas"], "CONFIRMACION");
 }
 
+/** Qué incluye y cuánto dura, con la cotización verificada del tarifario (sin tarjetas ni cambio de estado). */
+function detalle(input: PlannerInput, params: QuoteParams): PlannerStep {
+  const r = ultimo(input.toolResults, "verificar_stock_y_precio");
+  if (!r) {
+    if (!input.allowedTools.includes("verificar_stock_y_precio")) return final(input, SIN_PERMISO, []);
+    return llamada("verificar_stock_y_precio", { ...params }, "El cliente pregunta qué incluye o cuánto dura el servicio");
+  }
+  const out = r.ok ? VerificarStockOutput.safeParse(r.output) : undefined;
+  if (!out?.success) return final(input, "No pude consultar el detalle ahora. ¿Le ayudo a agendar o prefiere hablar con un asesor?", []);
+  const items = out.data.cotizacion.items;
+  const servicios = items.filter((l) => !l.sku).map((l) => l.concepto.replace(/^Mano de obra: /, ""));
+  const repuestos = items.filter((l) => l.sku).map((l) => l.concepto.toLowerCase());
+  const horas = out.data.duracionHoras.toLocaleString("es-CO", { maximumFractionDigits: 1 });
+  return final(
+    input,
+    `Según el tarifario oficial: ${servicios.join("; ")}. Repuestos: ${repuestos.join(", ")}. Tiempo estimado en el taller: ${horas} h. ¿Le agendo la cita?`,
+    [],
+  );
+}
+
 function seguros(input: PlannerInput): PlannerStep {
   const r = ultimo(input.toolResults, "cotizar_aliados_seguros");
   if (!r) {
@@ -244,6 +265,8 @@ export function planificar(input: PlannerInput): PlannerStep {
     case "agendar":
     case "confirmar":
       return agendar(input, base, intencion === "confirmar");
+    case "detalle":
+      return detalle(input, base);
     default:
       return cotizar(input, base, intencion);
   }

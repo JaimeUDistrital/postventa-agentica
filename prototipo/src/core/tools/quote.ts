@@ -52,6 +52,8 @@ export interface QuoteBuild {
     fechaReposicion: string | null;
   }[];
   ventaCruzadaSugerida: { tariffId: string; descripcion: string; precioUsd: number }[];
+  /** Horas de taller del mantenimiento más los extras (tarifario). */
+  duracionHoras: number;
   /** Repuestos de la cotización con stock insuficiente (para el flujo sin_stock). */
   faltantes: Part[];
 }
@@ -127,6 +129,7 @@ export async function buildQuote(ports: Ports, p: QuoteParams): Promise<QuoteBui
     disponibilidad,
     faltantes,
     ventaCruzadaSugerida: sugeridas,
+    duracionHoras: round2([base, ...extras].reduce((a, t) => a + t.duracionHoras, 0)),
     quote: {
       id: encodeQuoteId(p),
       vehicleId: p.vehicleId,

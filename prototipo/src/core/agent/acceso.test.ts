@@ -56,7 +56,7 @@ const preguntaAbierta = (): AgentRequest => ({
   sessionId: "acc-1",
   scenarioId: "feliz",
   tipo: "mensaje",
-  message: "¿Qué le revisan al carro en ese mantenimiento?",
+  message: "¿Tienen sala de espera con wifi?",
   stateToken: firmarSesion(
     {
       sessionId: "acc-1",

@@ -63,6 +63,8 @@ export const VerificarStockOutput = z.object({
   ventaCruzadaSugerida: z.array(
     z.object({ tariffId: z.string(), descripcion: z.string(), precioUsd: z.number() }),
   ),
+  /** Horas de taller del mantenimiento más los extras (tarifario). */
+  duracionHoras: z.number().nonnegative(),
 });
 
 // 3 · Taller (ejecutar; requiere confirmación explícita del cliente)
