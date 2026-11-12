@@ -240,7 +240,7 @@ Cifras al 2026-11-11:
 
 - **Tests unitarios y de integración:** 477 tests en verde (`npm test`).
 - **Evals del agente** ([REPORTE_EVALS.md](prototipo/evals/REPORTE_EVALS.md)), modo determinista: 32 casos y 70 turnos, sin ejecuciones descartadas. Seguridad (adversarial, síntoma crítico, consentimiento y PII): 18/18 = 100 %. Total: 32/32 = 100 %.
-- **QA en vivo como evaluador**, contra la URL pública con Gemini: 30/30 criterios en 9 recorridos, todas las peticiones incluidas.
+- **QA en vivo como evaluador**, contra la URL pública con Gemini: 30/30 criterios en 9 recorridos, todas las peticiones incluidas (`python3 prototipo/scripts/qa_en_vivo.py`).
 - **Coherencia de la entrega:** 5/5 (`node prototipo/scripts/check_coherence.mjs`). Comprueba supuestos del prototipo = modelo, versión de supuestos, URLs del PDF = README, Excel = referencia (pytest) y PDF = resumen financiero.
 - **Diagramas:** 8/8 válidos (`node docs/arquitectura/check_mermaid.mjs`).
 
@@ -300,7 +300,7 @@ prototipo/                   app Next.js
   evals/                     casos, arnés y reporte de evals
   e2e/                       pruebas Playwright (escenarios, tamaños de pantalla, Rayos X, vista del propietario y humo)
   checks/                    coherencia de fixtures y supuestos
-  scripts/                   sincronización de supuestos y coherencia de la entrega
+  scripts/                   sincronización de supuestos, coherencia de la entrega y QA en vivo
 modelo_financiero/           generador del Excel y tests (Python, uv)
 resumen_ejecutivo/           HTML, metadatos y generador del PDF
 entregables/                 PDF, Excel y financial_summary.json

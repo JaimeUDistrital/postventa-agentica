@@ -45,7 +45,7 @@ src/
 evals/          casos, arnés y reporte
 e2e/            pruebas Playwright
 checks/         coherencia de fixtures y supuestos
-scripts/        sincronización de supuestos y coherencia de la entrega
+scripts/        sincronización de supuestos, coherencia de la entrega y QA en vivo (qa_en_vivo.py)
 ```
 
 Las decisiones de diseño están en [docs/adr](../docs/adr/README.md).
