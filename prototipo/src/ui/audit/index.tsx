@@ -47,7 +47,10 @@ export function construirAuditoria(messages: ChatMessage[], turns: AgentTurn[]):
     if (m.rol === "asesor") Object.assign(e, { humano: true, nombre: m.autor });
     const turn = m.turnId ? porTurno.get(m.turnId) : undefined;
     if (turn) {
-      e.motor = turn.mode === "llm" ? "Gemini" : "reglas";
+      // ADR 0009: el enrutador deja en la traza qué motor respondió. Sin ese evento no hubo IA
+      // (reglas, Guardián o tope); si Gemini falló, el turno llega como determinista.
+      const ruta = turn.trace.find((t) => t.name === "planner.ruta")?.payload?.ruta;
+      e.motor = turn.mode === "llm" && ruta === "ia" ? "Gemini" : "reglas";
       e.herramientas = [...new Set(turn.trace.filter((t) => t.kind === "tool_call").map((t) => t.name))];
       e.guardian = { entrada: veredicto(turn.guardrail.entrada), ...(turn.guardrail.salida ? { salida: veredicto(turn.guardrail.salida) } : {}) };
       if (m.cards.length) e.tarjetas = m.cards.map((c) => c.type);

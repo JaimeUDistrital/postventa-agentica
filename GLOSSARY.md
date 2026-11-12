@@ -28,13 +28,14 @@ Términos del dominio automotriz y del producto, tal como se usan en este repo.
 ## Producto y agente
 
 - **Guardián**: capa determinista (reglas, sin LLM) que valida entradas y salidas, y que el LLM no puede anular.
-- **Planner**: componente que decide el siguiente paso y las herramientas; hay uno determinista y otro con Gemini.
-- **Modo determinista**: funcionamiento sin LLM, con reglas fijas; es el modo por defecto de la demo.
+- **Planner**: componente que decide el siguiente paso y las herramientas; hay uno determinista, otro con Gemini y el enrutador híbrido que reparte entre ambos.
+- **Enrutador híbrido**: planner que, con la IA activa, manda al motor de reglas lo exacto (aviso inicial, botones, intenciones conocidas, casos con un asesor, cita confirmada) y a la IA solo lo que las reglas no entienden. En esa ruta la IA solo consulta datos: no cotiza, no agenda ni muestra tarjetas (ADR 0009).
+- **Modo determinista**: funcionamiento sin LLM, con reglas fijas; se usa si no hay `GEMINI_API_KEY`, si Gemini falla o, con el interruptor de emergencia, si falta el código del jurado.
 - **Traza**: registro ordenado de eventos de un turno (herramientas, políticas, estado) con PII enmascarada.
 - **Autonomía (informar / recomendar / ejecutar)**: nivel de acción permitido al agente: solo dar información, sugerir, o actuar por sí mismo.
-- **Código del jurado**: valor secreto de `DEMO_ACCESS_CODE` que, vía `?codigo=`, habilita Gemini en la demo pública.
+- **Código del jurado**: valor secreto de `DEMO_ACCESS_CODE`; solo con el interruptor `GEMINI_SOLO_CON_CODIGO=1` hace falta (vía `?codigo=`) para usar Gemini. Por defecto la IA atiende a todos (ADR 0007).
 - **Consola del asesor**: interfaz de la demo con clientes de hoy, conversación y panel de acciones.
-- **Motor de reglas**: lo que la consola muestra como «Motor: reglas» cuando responde el planner determinista (modo determinista, sin IA). No es lo mismo que la «Demo guiada».
+- **Motor de reglas**: el planner determinista. La consola muestra «Motor: reglas» cuando la IA no está disponible y solo responde él; con la IA activa sigue resolviendo lo exacto dentro del enrutador híbrido. No es lo mismo que la «Demo guiada».
 - **Demo guiada**: modo de uso por defecto de la consola: muestra los 3 pasos y el botón «Siguiente mensaje del cliente», que envía el guion del escenario.
 - **Modo libre**: modo de uso como en producción: sin guion ni pasos; se escribe como cliente o se usan los botones de las tarjetas. Cambiar de modo no borra las conversaciones.
 - **Agenda del taller**: pestaña de la consola con los cupos de cada bahía por día («Libre» / «Ocupado») y, resaltadas, las citas hechas en la demo con su estado («Reservada» / «Confirmada»).

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { AgentRequest, AgentTurn, SessionState } from "@/core/contracts";
 import type { GeminiClientLike } from "./llm";
 import { LIMITES_DEMO, llmHabilitado } from "./acceso";
+import { encodeQuoteId } from "@/core/tools";
 import { firmarSesion } from "./session";
 import { runTurnConEntorno } from "./index";
 
@@ -48,6 +49,32 @@ function fakeGemini(): GeminiClientLike & { llamadas: () => number } {
 
 const inicio: AgentRequest = { sessionId: "acc-1", scenarioId: "feliz", tipo: "inicio", message: "" };
 const accesoEvt = (t: AgentTurn) => t.trace.find((e) => e.name === "llm.acceso");
+const rutaEvt = (t: AgentTurn) => t.trace.find((e) => e.name === "planner.ruta");
+const QUOTE = encodeQuoteId({ vehicleId: "veh-01", hitoKm: 20_000, extras: [], descuentoPct: 0 });
+/** Pregunta abierta tras la cotización: con la IA activa la responde Gemini (enrutador híbrido, ADR 0009). */
+const preguntaAbierta = (): AgentRequest => ({
+  sessionId: "acc-1",
+  scenarioId: "feliz",
+  tipo: "mensaje",
+  message: "¿Qué le revisan al carro en ese mantenimiento?",
+  stateToken: firmarSesion(
+    {
+      sessionId: "acc-1",
+      scenarioId: "feliz",
+      vehicleId: "veh-01",
+      state: "COTIZACION",
+      turnos: 1,
+      intentosBloqueados: 0,
+      quoteId: QUOTE,
+      bookingId: null,
+      ventaCruzada: "pendiente",
+      casoAbiertoId: null,
+      historial: [],
+    },
+    SECRET,
+    Date.now(),
+  ),
+});
 
 describe("runTurnConEntorno · control de acceso al LLM", () => {
   it("con la IA activa, un turno que el Guardián resuelve sin planner (sin consentimiento) se informa como llm y no llama a Gemini", async () => {
@@ -57,12 +84,22 @@ describe("runTurnConEntorno · control de acceso al LLM", () => {
     expect(t.mode).toBe("llm");
   });
 
-  it("por defecto (IA para todos): sin código + clave → planner LLM, sin evento llm.acceso", async () => {
+  it("por defecto (IA para todos): sin código + clave → una pregunta abierta la responde Gemini, sin evento llm.acceso", async () => {
     const client = fakeGemini();
-    const t = await runTurnConEntorno(inicio, ENV_OK, client);
+    const t = await runTurnConEntorno(preguntaAbierta(), ENV_OK, client);
     expect(t.mode).toBe("llm");
     expect(client.llamadas()).toBeGreaterThan(0);
+    expect(rutaEvt(t)?.payload).toMatchObject({ ruta: "ia" });
     expect(accesoEvt(t)).toBeUndefined();
+  });
+
+  it("con la IA activa, el aviso inicial lo resuelve el motor de reglas (exacto) sin llamar a Gemini", async () => {
+    const client = fakeGemini();
+    const t = await runTurnConEntorno(inicio, ENV_OK, client);
+    expect(client.llamadas()).toBe(0);
+    expect(t.mode).toBe("llm");
+    expect(t.reply.cards.map((c) => c.type)).toContain("cotizacion");
+    expect(rutaEvt(t)?.payload).toMatchObject({ ruta: "reglas" });
   });
 
   it("con interruptor: sin código → determinista, Gemini nunca se invoca y se explica en la traza", async () => {
@@ -89,7 +126,7 @@ describe("runTurnConEntorno · control de acceso al LLM", () => {
 
   it("código correcto + clave → planner LLM; el código no aparece en la respuesta", async () => {
     const client = fakeGemini();
-    const t = await runTurnConEntorno({ ...inicio, accessCode: CODIGO }, ENV_CERRADO, client);
+    const t = await runTurnConEntorno({ ...preguntaAbierta(), accessCode: CODIGO }, ENV_CERRADO, client);
     expect(t.mode).toBe("llm");
     expect(client.llamadas()).toBeGreaterThan(0);
     expect(accesoEvt(t)).toBeUndefined();

@@ -105,7 +105,7 @@ function seccionLlm(llm: CorridaLlm[], hayClave: boolean): string[] {
     ];
   }
   out.push(
-    "Mismos casos y criterios, con `createGeminiPlanner` (respaldo determinista si el LLM falla). Tokens y costo salen del `usage` de los eventos `llm` de la traza.",
+    "Mismos casos y criterios, con el enrutador híbrido sobre `createGeminiPlanner` (ADR 0009; respaldo determinista si el LLM falla). Tokens y costo salen del `usage` de los eventos `llm` de la traza.",
     "",
     "| Modelo | Casos | Pasan | Acierto | Seguridad | Tokens medios/conv. (entrada+salida) | Costo medio/conv. (USD) | Llamadas LLM/conv. | Respaldos |",
     "|---|---|---|---|---|---|---|---|---|",

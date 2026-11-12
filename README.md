@@ -27,7 +27,7 @@ La interfaz es una **Consola del asesor**.
 7. La pestaña **Auditoría** muestra la línea de tiempo del cliente (quién respondió, la IA o una persona, cuándo y cómo) y permite **Descargar auditoría (JSON)**.
 8. **Ver detalle técnico** abre la traza (herramientas, Guardián, memoria).
 
-Modo Gemini: la IA (Gemini) atiende a todos los visitantes por defecto, con topes de 20 turnos por sesión y 30 peticiones por minuto por IP. Si Gemini no está disponible, la demo pasa sola al motor de reglas y lo indica con «Motor: reglas». El código del jurado (`?codigo=...`) solo aplica si se activa el interruptor de emergencia ([ADR 0007](docs/adr/0007-ia-para-todos-con-topes.md)).
+Modo Gemini: la IA (Gemini) atiende a todos los visitantes por defecto, con topes de 20 turnos por sesión y 30 peticiones por minuto por IP. Si Gemini no está disponible, la demo pasa sola al motor de reglas y lo indica con «Motor: reglas». El código del jurado (`?codigo=...`) solo aplica si se activa el interruptor de emergencia ([ADR 0007](docs/adr/0007-ia-para-todos-con-topes.md)). Un enrutador híbrido manda lo exacto (aviso inicial, botones, agendar, seguros, casos con un asesor) al motor de reglas, y a Gemini solo las preguntas abiertas que las reglas no entienden ([ADR 0009](docs/adr/0009-enrutador-hibrido.md)).
 
 ## Correr en local
 
@@ -60,12 +60,13 @@ Plantilla en [prototipo/.env.example](prototipo/.env.example). Sin valores reale
 
 | Variable | Para qué sirve | Si falta |
 |---|---|---|
-| `GEMINI_API_KEY` | Clave de Gemini (proyecto sin facturación) | Modo determinista |
+| `GEMINI_API_KEY` | Clave de Gemini (proyecto con límite de gasto) | Modo determinista |
 | `GEMINI_MODEL` | Modelo de Gemini | Se usa el modelo por defecto del código |
 | `SESSION_SECRET` | Firma HMAC del token de sesión | En desarrollo usa un secreto fijo; en producción `/api/agent` responde 500 |
-| `DEMO_ACCESS_CODE` | Código del jurado (≥ 12 caracteres) que habilita Gemini | Gemini desactivado; modo determinista |
+| `GEMINI_SOLO_CON_CODIGO` | Interruptor de emergencia: con `1`, Gemini exige el código del jurado | IA para todos ([ADR 0007](docs/adr/0007-ia-para-todos-con-topes.md)) |
+| `DEMO_ACCESS_CODE` | Código del jurado (≥ 12 caracteres); solo se usa con el interruptor activo | Con el interruptor activo: modo determinista |
 
-Gemini solo se usa si hay `GEMINI_API_KEY`, `DEMO_ACCESS_CODE` válido y la petición trae el código correcto ([ADR 0006](docs/adr/0006-proteccion-demo-publica.md)).
+Gemini se usa si hay `GEMINI_API_KEY` ([ADR 0007](docs/adr/0007-ia-para-todos-con-topes.md)). Con `GEMINI_SOLO_CON_CODIGO=1`, además hace falta un `DEMO_ACCESS_CODE` válido y que la petición traiga ese código ([ADR 0006](docs/adr/0006-proteccion-demo-publica.md)). Con la IA activa, el enrutador híbrido decide en cada turno si responde el motor de reglas o Gemini ([ADR 0009](docs/adr/0009-enrutador-hibrido.md)).
 
 ## Estructura
 

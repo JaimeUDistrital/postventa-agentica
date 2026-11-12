@@ -6,7 +6,7 @@ import type { AgentRequest, AgentTurn } from "@/core/contracts";
 import { DEMO_NOW, policy } from "@/core/config";
 import { createMockPorts } from "@/core/adapters/mock";
 import { fixtures } from "@/core/data";
-import { createAgent, plannerDeterminista } from "@/core/agent";
+import { createAgent, createPlannerHibrido, plannerDeterminista } from "@/core/agent";
 import { createGeminiPlanner } from "@/core/agent/llm";
 import type { Planner } from "@/core/ports";
 import type { Caso } from "./casos";
@@ -40,8 +40,9 @@ export interface Resultado {
 
 export const plannerDeterministaEval = (): Planner => plannerDeterminista;
 
+/** Igual que en producción (ADR 0009): enrutador híbrido sobre Gemini, con respaldo determinista. */
 export const plannerGemini = (apiKey: string, model: string): Planner =>
-  createGeminiPlanner({ apiKey, model, fallback: plannerDeterminista });
+  createPlannerHibrido(createGeminiPlanner({ apiKey, model, fallback: plannerDeterminista }));
 
 export async function correrCaso(caso: Caso, planner: Planner): Promise<{ turnos: AgentTurn[]; error?: string }> {
   const turnos: AgentTurn[] = [];

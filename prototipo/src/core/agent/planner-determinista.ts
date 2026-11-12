@@ -195,6 +195,18 @@ function seguros(input: PlannerInput): PlannerStep {
   return final(input, TEXTO_SEGUROS, r.ok ? ["seguro"] : []);
 }
 
+/**
+ * Lo que el motor de reglas no entiende (respondería con el menú): intención «otro» con la cotización
+ * ya hecha, fuera de HANDOFF y CERRADO y sin elegir un seguro mostrado. En modo híbrido, ahí responde
+ * la IA (ADR 0009).
+ */
+export function fueraDeReglas(input: PlannerInput): boolean {
+  const { state, quoteId } = input.session;
+  if (state === "HANDOFF" || state === "CERRADO" || !quoteId) return false;
+  if (detectarIntencion(input.request, input.maskedMessage) !== "otro") return false;
+  return !(segurosMostrados(input) && eleccionSeguro(input.maskedMessage) !== null);
+}
+
 export function planificar(input: PlannerInput): PlannerStep {
   const intencion = detectarIntencion(input.request, input.maskedMessage);
   // T21: con el caso en manos de un humano, el agente no ofrece nada más.
@@ -214,8 +226,7 @@ export function planificar(input: PlannerInput): PlannerStep {
   if (input.session.state === "CERRADO") return citaCerrada(input);
 
   const base = paramsBase(input);
-  if (intencion === "otro" && input.session.quoteId)
-    return ultimoTextoAgente(input) === MENU ? noResuelto(input) : final(input, MENU, []);
+  if (fueraDeReglas(input)) return ultimoTextoAgente(input) === MENU ? noResuelto(input) : final(input, MENU, []);
   if (!base) return necesitaContexto(input);
 
   switch (intencion) {

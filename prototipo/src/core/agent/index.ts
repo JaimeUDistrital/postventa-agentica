@@ -13,11 +13,13 @@ import { LIMITES_DEMO, llmHabilitado } from "./acceso";
 import { selectPlanner, type GeminiClientLike } from "./llm";
 import { createAgent } from "./orchestrator";
 import { plannerDeterminista } from "./planner-determinista";
+import { createPlannerHibrido } from "./planner-hibrido";
 import { resolverSecreto, verificarSesion } from "./session";
 import { evento } from "./trace";
 
 export { createAgent, type Agent, type AgentDeps } from "./orchestrator";
 export { plannerDeterminista } from "./planner-determinista";
+export { createPlannerHibrido, elegirRuta } from "./planner-hibrido";
 export { ConfiguracionError, SesionInvalidaError } from "./session";
 
 /**
@@ -44,9 +46,9 @@ export async function runTurnConEntorno(
     if (turnos >= LIMITES_DEMO.maxTurnosSesion) return turnoBloqueadoPorTope(peticion, secret);
   }
 
-  const planner = acceso.habilitado
-    ? selectPlanner({ env, fallback: plannerDeterminista, client })
-    : plannerDeterminista;
+  const elegido = acceso.habilitado ? selectPlanner({ env, fallback: plannerDeterminista, client }) : plannerDeterminista;
+  // ADR 0009: con IA, enrutador híbrido (reglas para lo exacto, IA para lo que las reglas no entienden).
+  const planner = elegido.mode === "llm" ? createPlannerHibrido(elegido) : elegido;
   const turno = await createAgent({ ports: createMockPorts(fixtures), planner, now: DEMO_NOW, secret }).runTurn(peticion);
   if (acceso.habilitado || acceso.motivo === "sin_clave") return turno;
   return {

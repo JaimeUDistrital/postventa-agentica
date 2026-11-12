@@ -19,7 +19,8 @@ const veredicto = (action: "permitir" | "escalar", categorias: string[] = []) =>
   allow: action === "permitir", action, categorias, reasons: [], maskedInput: "", riskScore: 0,
 });
 const turno = { turnId: "t1", mode: "deterministic", trace: [ev("1", "tool_call", "consultar_contexto_vehiculo"), ev("2", "tool_result", "consultar_contexto_vehiculo"), ev("3", "tool_call", "verificar_stock_y_precio")], guardrail: { entrada: veredicto("permitir"), salida: veredicto("permitir") } } as unknown as AgentTurn;
-const turnoGemini = { turnId: "t2", mode: "llm", trace: [], guardrail: { entrada: veredicto("escalar", ["sintoma_critico"]) } } as unknown as AgentTurn;
+const rutaIa: TraceEvent = { ...ev("r0", "llm", "planner.ruta"), payload: { ruta: "ia", motivo: "x" } };
+const turnoGemini = { turnId: "t2", mode: "llm", trace: [rutaIa], guardrail: { entrada: veredicto("escalar", ["sintoma_critico"]) } } as unknown as AgentTurn;
 
 const mensajes: ChatMessage[] = [
   { id: "t1", turnId: "t1", rol: "agente", texto: "Le comparto la cotización", cards: [{ type: "bloqueo", motivo: "x" }], ts: "2026-11-11T15:00:00.000Z" },
@@ -42,6 +43,20 @@ test("construirAuditoria: autor, hora, motor, herramientas y veredicto del Guard
   expect(e[4]).toMatchObject({ humano: true, nombre: "Carlos R.", texto: "Hola, soy Carlos" });
   expect(e[1].humano).toBeUndefined();
   expect(e[1].motor).toBeUndefined();
+});
+
+test("construirAuditoria: con la IA activa, un turno que resolvió el motor de reglas (ADR 0009) se audita como reglas", () => {
+  const ruta = (id: string, r: "reglas" | "ia"): TraceEvent => ({ ...ev(id, "llm", "planner.ruta"), payload: { ruta: r, motivo: "x" } });
+  const porReglas = { ...turnoGemini, turnId: "t1", trace: [ruta("r1", "reglas")] } as AgentTurn;
+  const porIa = { ...turnoGemini, turnId: "t2", trace: [ruta("r2", "ia")] } as AgentTurn;
+  const e = construirAuditoria(mensajes, [porReglas, porIa]);
+  expect(e[0].motor).toBe("reglas");
+  expect(e[2].motor).toBe("Gemini");
+});
+
+test("construirAuditoria: un turno con la IA activa que resolvió el Guardián sin planner (sin evento de ruta) no se atribuye a Gemini", () => {
+  const sinPlanner = { ...turnoGemini, trace: [] } as unknown as AgentTurn;
+  expect(construirAuditoria(mensajes, [turno, sinPlanner])[2].motor).toBe("reglas");
 });
 
 test("la línea de tiempo muestra hora, autor, detalles de la IA y la marca «humano» del asesor", () => {

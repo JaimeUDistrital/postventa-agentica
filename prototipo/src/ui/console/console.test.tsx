@@ -13,6 +13,8 @@ beforeEach(() => {
   window.sessionStorage.clear();
   window.localStorage.clear();
   window.history.replaceState({}, "", "/");
+  // Motor de reglas fijo: no depende de si la terminal tiene GEMINI_API_KEY.
+  vi.stubEnv("GEMINI_API_KEY", "");
   // Solo la API del agente; cualquier otra llamada (p. ej. a Gemini desde el core) falla como sin red.
   vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) =>
     (typeof input === "string" ? input : input instanceof URL ? input.href : input.url) === "/api/agent"
@@ -24,6 +26,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 const card = (id: string) => screen.getByTestId(`scenario-btn-${id}`);
