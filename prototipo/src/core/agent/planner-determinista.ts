@@ -63,6 +63,17 @@ const SIN_PERMISO = "Su caso ya está en manos de un asesor humano, que le conta
 /** T21: el menú ofrece siempre la salida a una persona; si se repite, el caso pasa a un humano. */
 const MENU =
   "Puedo ayudarle a agendar, agregar el paquete de desgaste o ver seguros. ¿Qué prefiere? Si lo desea, escriba «asesor» y le atiende una persona.";
+/** Días de atención: supuesto `dias_operacion_mes` (dato del cliente: lunes a sábado, sin festivos). */
+const DIAS_ATENCION = "El taller atiende de lunes a sábado, sin festivos.";
+const PREGUNTA_DIAS = /(sabado|domingo|festivo|lunes|martes|miercoles|jueves|viernes|horario|a que hora|abren|cierran|atienden)/;
+
+/** Datos del taller que el sistema no tiene: se dice, no se inventan (ni la IA ni las reglas). */
+function infoTaller(input: PlannerInput): PlannerStep {
+  const dias = PREGUNTA_DIAS.test(normalizar(input.maskedMessage));
+  const texto = `${dias ? `${DIAS_ATENCION} El horario exacto` : "Ese dato del taller"} no lo tengo confirmado en el sistema y prefiero no inventarlo: un asesor se lo confirma si escribe «asesor». Si quiere, le agendo la cita (escriba «agéndeme»).`;
+  return final(input, texto, []);
+}
+
 const TEXTO_SEGUROS = "Estas son las opciones de nuestras aseguradoras aliadas. Usted decide si le interesa alguna.";
 
 const ultimoTextoAgente = (input: PlannerInput): string | undefined =>
@@ -247,6 +258,7 @@ export function planificar(input: PlannerInput): PlannerStep {
     return segurosMostrados(input)
       ? final(input, "Ya le compartí las opciones de nuestras aseguradoras aliadas más arriba. Para elegir una, escriba su número, por ejemplo «la 1».", [])
       : seguros(input);
+  if (intencion === "info_taller") return infoTaller(input);
   if (input.session.state === "CERRADO") return citaCerrada(input);
 
   const base = paramsBase(input);

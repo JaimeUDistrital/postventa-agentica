@@ -10,6 +10,7 @@ export type Intencion =
   | "confirmar"
   | "seguros"
   | "detalle"
+  | "info_taller"
   | "asesor"
   | "otro";
 
@@ -39,6 +40,12 @@ const REGLAS: readonly [Intencion, RegExp][] = [
   // QA en vivo: «cuánto tiempo / se demora / dura» no es una pregunta de precio.
   ["precio", /(precio|\bcuanto\b(?!\s+(?:se\s+)?(?:tiempo|dur|demor|tard|hora|minut|dia|km|kilometr))|cuesta|valor|cotiz)/],
   ["agendar", /(agend|reserv|\bcita\b|^\s*si\b|\bsi,|\bsi quiero\b|\bme interesa\b)/],
+  // QA en vivo: datos del taller que el sistema no tiene (Gemini afirmó «contamos con sala de espera y wifi»).
+  // Va al final: «agéndeme el sábado» es agendar.
+  [
+    "info_taller",
+    /(sala de espera|wifi|wi-fi|internet|parqueadero|parqueo|estacionamiento|transporte|donde (?:queda|esta|estan|quedan)|direccion del taller|ubicacion|horario|a que hora|abren|cierran|atienden|sabado|domingo|festivo|\bcafe\b)/,
+  ],
 ];
 
 export const normalizar = (t: string): string =>

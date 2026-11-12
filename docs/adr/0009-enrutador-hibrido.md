@@ -15,7 +15,7 @@ El motor de reglas resuelve bien esos casos (evals en modo determinista: 32/32 c
 
 ## Decisión
 - Con la IA activa, el planner es un **enrutador híbrido** (`src/core/agent/planner-hibrido.ts`):
-  - **Motor de reglas:** aviso inicial, botones, intenciones conocidas (agendar, confirmar, paquete, seguros, elegir seguro, asesor, precio), caso en manos de un asesor (`HANDOFF`), cita confirmada (`CERRADO`), mensaje vacío y todo lo anterior a la cotización.
+  - **Motor de reglas:** aviso inicial, botones, intenciones conocidas (agendar, confirmar, paquete, seguros, elegir seguro, asesor, precio, qué incluye y cuánto dura, y datos del taller que el sistema no tiene, como sala de espera, wifi o días de atención), caso en manos de un asesor (`HANDOFF`), cita confirmada (`CERRADO`), mensaje vacío y todo lo anterior a la cotización.
   - **IA:** solo lo que el motor de reglas no entiende (`fueraDeReglas`: intención «otro» con la cotización ya hecha). Antes, ahí se respondía con el menú.
 - **Guardarraíles de la ruta IA:**
   - solo herramientas de consulta (`consultar_contexto_vehiculo`): no cotiza, no agenda y no ofrece seguros. El enrutador filtra además cualquier otra herramienta que proponga la IA (evento `ia.herramienta_descartada`) y, si no queda ninguna, responde el motor de reglas;
@@ -24,6 +24,7 @@ El motor de reglas resuelve bien esos casos (evals en modo determinista: 32/32 c
   - responde en texto, sin tarjetas y sin mover el estado;
   - solo puede pasar a un humano por `sintoma_critico` o `cliente_molesto`. Si propone otro motivo, se descarta (evento `ia.pase_descartado`) y responde el motor de reglas. `no_resuelto` sigue la regla del ADR 0008 (2 mensajes seguidos sin entender).
   - ese pase solo vale si el mensaje del cliente lo respalda (palabras de falla o de queja). En vivo, Gemini marcó `sintoma_critico` ante un «hola»; sin respaldo se descarta igual (`ia.pase_descartado`);
+  - no promete mostrar nada («le comparto», «aquí tiene»): su ruta no muestra tarjetas; si lo hace, responde el motor de reglas (evento `ia.promesa_descartada`). En vivo, Gemini prometía «las opciones que le comparto» y afirmó «contamos con sala de espera y wifi», dato que el sistema no tiene; por eso esas preguntas pasaron a las reglas;
   - no envía duraciones ni precios en texto libre: «qué incluye» y «cuánto dura» salen del tarifario por reglas, y si la IA escribe «cuatro horas» o «200 mil pesos», el Guardián lo reemplaza por un texto seguro (evento `ia.dato_no_verificado`). Falla hacia lo seguro: una cifra legítima del contexto también se reemplaza;
 - Cada turno deja en la traza el evento `planner.ruta`, con la ruta y el motivo. La Auditoría lo usa para mostrar «Reglas» o «Gemini».
 - Si Gemini falla, responde el motor de reglas y la interfaz lo indica (ADR 0002 y 0007).

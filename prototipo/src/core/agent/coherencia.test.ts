@@ -234,3 +234,34 @@ describe("Revisión · la pregunta de detalle no tapa otras intenciones", () => 
     expect(t.reply.text).not.toMatch(/: \./);
   });
 });
+
+describe("QA en vivo · datos del taller que el sistema no tiene (Gemini los inventaba)", () => {
+  const de = (message: string) => detectarIntencion({ sessionId: "s", scenarioId: "feliz", tipo: "mensaje", message }, message);
+
+  it.each([
+    ["¿Tienen sala de espera con wifi?", "info_taller"],
+    ["¿Puedo llevar el carro el sábado por la mañana?", "info_taller"],
+    ["¿Dónde queda el taller?", "info_taller"],
+    ["¿Tienen parqueadero?", "info_taller"],
+    ["¿Me lo pueden agendar el sábado?", "agendar"],
+    ["¿Qué tipo de aceite lleva mi carro?", "otro"],
+  ])("«%s» → %s", (texto, esperado) => {
+    expect(de(texto)).toBe(esperado);
+  });
+
+  it("«¿tienen sala de espera?» dice que no lo tiene confirmado, sin herramientas, tarjetas ni caso", async () => {
+    const [, t] = await conversar("feliz", [INICIO, msg("¿Tienen sala de espera con wifi?")]);
+    expect(t.reply.text).toContain("no lo tengo confirmado");
+    expect(t.reply.text).toMatch(/asesor/);
+    expect(tools(t)).toEqual([]);
+    expect(t.reply.cards).toEqual([]);
+    expect(t.state).toBe("COTIZACION");
+    expect(t.handoff).toBeUndefined();
+  });
+
+  it("«¿el sábado?» responde los días de atención del supuesto dias_operacion_mes (lunes a sábado)", async () => {
+    const [, t] = await conversar("feliz", [INICIO, msg("¿Puedo llevar el carro el sábado por la mañana?")]);
+    expect(t.reply.text).toContain("lunes a sábado");
+    expect(t.state).toBe("COTIZACION");
+  });
+});

@@ -82,7 +82,9 @@ describe("elegirRuta", () => {
     ["aún sin cotización", { message: "¿qué incluye?", quoteId: null }, "reglas"],
     ["mensaje vacío", { message: "   " }, "reglas"],
     ["elige un seguro ya mostrado", { message: "la 2", agenteDijo: TEXTO_SEGUROS }, "reglas"],
-    ["pregunta abierta tras la cotización", { message: "¿Tienen sala de espera con wifi?" }, "ia"],
+    ["pregunta abierta tras la cotización", { message: "¿Qué tipo de aceite lleva mi carro?" }, "ia"],
+    ["dato del taller que el sistema no tiene (QA en vivo)", { message: "¿Tienen sala de espera con wifi?" }, "reglas"],
+    ["día de atención (QA en vivo)", { message: "¿Puedo llevar el carro el sábado por la mañana?" }, "reglas"],
     // QA en vivo: Gemini inventaba qué incluye y cuánto dura; ahora lo responden las reglas con el tarifario.
     ["«¿qué le hacen al carro?» (detalle del tarifario)", { message: "¿qué le hacen al carro en ese mantenimiento?" }, "reglas"],
     ["«¿cuánto tiempo se demora?»", { message: "¿Cuánto tiempo se demora el servicio?" }, "reglas"],
@@ -113,13 +115,13 @@ describe("createPlannerHibrido", () => {
 
   it("ruta IA: solo le ofrece herramientas de consulta", async () => {
     const ia = iaFalsa();
-    await createPlannerHibrido(ia.planner).next(entrada({ message: "¿Tienen sala de espera?" }));
+    await createPlannerHibrido(ia.planner).next(entrada({ message: "¿Qué tipo de aceite lleva mi carro?" }));
     expect(ia.next).toHaveBeenCalledTimes(1);
     expect(ia.next.mock.calls[0][0].allowedTools).toEqual(["consultar_contexto_vehiculo"]);
   });
 
   it("ruta IA: responde en texto, sin tarjetas y sin mover el estado", async () => {
-    const r = await createPlannerHibrido(iaFalsa().planner).next(entrada({ message: "¿Tienen sala de espera?" }));
+    const r = await createPlannerHibrido(iaFalsa().planner).next(entrada({ message: "¿Qué tipo de aceite lleva mi carro?" }));
     expect(r.step).toEqual({
       kind: "final",
       text: "El mantenimiento de 20.000 km incluye cambio de aceite, filtros y revisión general.",
@@ -230,10 +232,20 @@ describe("createPlannerHibrido", () => {
   });
 
   it("ruta IA: un texto sin cifras de duración ni precio pasa tal cual", async () => {
-    const texto = "Sí, tenemos sala de espera. ¿Le ayudo a agendar su mantenimiento de 30.000 km?";
+    const texto = "Con gusto. ¿Le ayudo a agendar su mantenimiento de 30.000 km?";
     const r = await createPlannerHibrido(iaFalsa(responder({ text: texto })).planner).next(entrada({ message: "hola" }));
     expect((r.step as Extract<PlannerStep, { kind: "final" }>).text).toBe(texto);
   });
+
+  // QA en vivo: Gemini decía «en las opciones que le comparto» y la ruta IA no muestra tarjetas.
+  it.each(["Le comparto las opciones de reserva.", "Puede agendar en las opciones que le muestro.", "Aquí tiene la cotización."])(
+    "ruta IA: «%s» promete algo que no se muestra; se descarta y responden las reglas",
+    async (texto) => {
+      const r = await createPlannerHibrido(iaFalsa(responder({ text: texto })).planner).next(entrada({ message: "hola" }));
+      expect((r.step as Extract<PlannerStep, { kind: "final" }>).text).not.toBe(texto);
+      expect(r.trace?.some((e) => e.name === "ia.promesa_descartada" && e.status === "blocked")).toBe(true);
+    },
+  );
 
   it("ruta IA: de una mezcla, solo sigue la herramienta de consulta", async () => {
     const consulta = { id: "c2", tool: "consultar_contexto_vehiculo" as const, args: { vehicleId: "veh-01" } };

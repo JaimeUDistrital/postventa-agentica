@@ -111,6 +111,19 @@ const eventoDatoNoVerificado = () =>
     detalle: "La IA afirmó una duración o un precio que no viene de una herramienta: se reemplazó por un texto seguro.",
   });
 
+/** Promesas de mostrar algo («le comparto», «aquí tiene»): la ruta IA responde solo en texto, sin tarjetas. */
+const PROMESA = /\b(?:le|les|se lo|se la)\s+(?:comparto|muestro|envio|adjunto|dejo)\b|\bopciones que le\b|\baqui (?:tiene|le dejo|estan|esta)\b|\ba continuacion\b/;
+
+const eventoPromesa = () =>
+  evento({
+    kind: "policy",
+    agent: "Guardián",
+    name: "ia.promesa_descartada",
+    system: "Guardián",
+    status: "blocked",
+    detalle: "La IA prometió mostrar algo que su ruta no muestra (sin tarjetas): responde el motor de reglas.",
+  });
+
 const conTraza = (r: PlannerResult, antes: PlannerResult["trace"] = []): PlannerResult => ({
   ...r,
   trace: [...antes, ...(r.trace ?? [])],
@@ -146,6 +159,9 @@ export function createPlannerHibrido(ia: Planner, reglas: Planner = plannerDeter
       if (handoff && !respaldado(handoff.motivo, input.maskedMessage)) {
         const deReglas = await reglas.next(input);
         return conTraza(deReglas, [...traza, ...(r.trace ?? []), eventoDescarte(handoff.motivo, "sin respaldo en el mensaje del cliente")]);
+      }
+      if (!handoff && PROMESA.test(normalizar(r.step.text))) {
+        return conTraza(await reglas.next(input), [...traza, ...(r.trace ?? []), eventoPromesa()]);
       }
       // Duraciones y precios solo salen de herramientas verificadas: si la IA los afirma, no se envían.
       const inventado = !handoff && DATO_NO_VERIFICADO.test(normalizar(r.step.text));
