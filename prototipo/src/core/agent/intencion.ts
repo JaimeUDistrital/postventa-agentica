@@ -32,7 +32,8 @@ const REGLAS: readonly [Intencion, RegExp][] = [
   ["rechazar_venta_cruzada", /\bno (gracias|quiero|me interesa)\b|\bsin (el )?paquete\b/],
   ["venta_cruzada", /(freno|pastilla|bateria|llanta|alineac|balanceo|agregue|agrega|anad)/],
   ["seguros", /\b(seguro|seguros|soat|poliza)\b/],
-  ["precio", /(precio|cuanto|cuesta|valor|cotiz)/],
+  // QA en vivo: «cuánto tiempo / se demora / dura» no es una pregunta de precio.
+  ["precio", /(precio|\bcuanto\b(?!\s+(?:se\s+)?(?:tiempo|dur|demor|tard|hora|minut|dia|km|kilometr))|cuesta|valor|cotiz)/],
   ["agendar", /(agend|reserv|\bcita\b|^\s*si\b|\bsi,|\bsi quiero\b|\bme interesa\b)/],
 ];
 

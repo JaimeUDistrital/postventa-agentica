@@ -297,6 +297,8 @@ export function createAgent(deps: AgentDeps): Agent {
       text: "Necesito que un asesor revise su solicitud; le contactará en breve.",
       nextState: s.state,
       showCards: [],
+      // QA en vivo: si se promete un asesor, el caso se abre de verdad.
+      handoff: { motivo: "no_resuelto", prioridad: "media", resumen: "El agente agotó sus pasos sin una respuesta final" },
     };
     return { final, toolResults, fallback, clienteConfirmo };
   }

@@ -83,6 +83,12 @@ describe("elegirRuta", () => {
     ["mensaje vacío", { message: "   " }, "reglas"],
     ["elige un seguro ya mostrado", { message: "la 2", agenteDijo: TEXTO_SEGUROS }, "reglas"],
     ["pregunta abierta tras la cotización", { message: "¿qué le hacen al carro en ese mantenimiento?" }, "ia"],
+    // QA en vivo: «cuánto tiempo» no es una pregunta de precio.
+    ["«¿cuánto tiempo se demora?»", { message: "¿Cuánto tiempo se demora el servicio?" }, "ia"],
+    ["«¿cuánto se demora?»", { message: "¿cuánto se demora?" }, "ia"],
+    ["«¿cuánto dura?»", { message: "¿Cuánto dura el mantenimiento?" }, "ia"],
+    ["«¿cuánto cuesta?» sigue siendo precio", { message: "¿cuánto cuesta?" }, "reglas"],
+    ["«¿cuánto me costó?» sigue siendo precio", { message: "¿cuánto me costó al final?" }, "reglas"],
     ["saludo tras la cotización", { message: "hola" }, "ia"],
   ])("%s → %s", (_n, o, ruta) => {
     expect(elegirRuta(entrada(o)).ruta).toBe(ruta);
@@ -167,6 +173,27 @@ describe("createPlannerHibrido", () => {
     expect(descartes.map((e) => e.payload?.tool)).toEqual(["agendar_bahia_taller", "verificar_stock_y_precio"]);
   });
 
+  it("ruta IA: una consulta ya hecha en este turno no se vuelve a ofrecer (QA en vivo: Gemini la repetía 4 veces)", async () => {
+    const ia = iaFalsa();
+    const yaConsultado: PlannerInput = {
+      ...entrada({ message: "hola", iteration: 1 }),
+      toolResults: [{ tool: "consultar_contexto_vehiculo", ok: true, output: {}, trace: [] } as unknown as PlannerInput["toolResults"][number]],
+    };
+    await createPlannerHibrido(ia.planner).next(yaConsultado);
+    expect(ia.next.mock.calls[0][0].allowedTools).toEqual([]);
+  });
+
+  it("ruta IA: si la IA repite una consulta ya hecha, se descarta", async () => {
+    const paso: PlannerStep = { kind: "tool_calls", rationale: "x", calls: [{ id: "c1", tool: "consultar_contexto_vehiculo", args: { vehicleId: "veh-01" } }] };
+    const yaConsultado: PlannerInput = {
+      ...entrada({ message: "hola", iteration: 1 }),
+      toolResults: [{ tool: "consultar_contexto_vehiculo", ok: true, output: {}, trace: [] } as unknown as PlannerInput["toolResults"][number]],
+    };
+    const r = await createPlannerHibrido(iaFalsa(paso).planner).next(yaConsultado);
+    expect(r.step.kind).toBe("final");
+    expect(r.trace?.some((e) => e.name === "ia.herramienta_descartada")).toBe(true);
+  });
+
   it("ruta IA: de una mezcla, solo sigue la herramienta de consulta", async () => {
     const consulta = { id: "c2", tool: "consultar_contexto_vehiculo" as const, args: { vehicleId: "veh-01" } };
     const paso: PlannerStep = { kind: "tool_calls", rationale: "x", calls: [{ id: "c1", tool: "cotizar_aliados_seguros", args: {} }, consulta] };
@@ -177,6 +204,14 @@ describe("createPlannerHibrido", () => {
   it("si la IA cae al respaldo, se conserva la marca fallback", async () => {
     const r = await createPlannerHibrido(iaFalsa(responder(), { fallback: true }).planner).next(entrada({ message: "hola" }));
     expect(r.fallback).toBe(true);
+  });
+
+  it("la respuesta del respaldo (motor de reglas) se respeta tal cual: su pase no_resuelto no se descarta (QA local)", async () => {
+    const handoff = { motivo: "no_resuelto" as const, prioridad: "media" as const, resumen: "2 mensajes sin entender" };
+    const r = await createPlannerHibrido(iaFalsa(responder({ handoff }), { fallback: true }).planner).next(entrada({ message: "hola" }));
+    expect(r.fallback).toBe(true);
+    expect(r.step).toMatchObject({ kind: "final", handoff });
+    expect(r.trace?.some((e) => e.name === "ia.pase_descartado")).toBe(false);
   });
 
   it("el evento de ruta sale solo en la primera iteración del turno", async () => {

@@ -8,6 +8,7 @@ import type { AgentRequest, AgentTurn, ScenarioId } from "@/core/contracts";
 import { DEMO_NOW } from "@/core/config";
 import { createMockPorts } from "@/core/adapters/mock";
 import { fixtures } from "@/core/data";
+import type { Planner } from "@/core/ports";
 import { createAgent, plannerDeterminista } from "./index";
 
 const SECRET = "secreto-de-prueba-0123456789abcdef";
@@ -169,5 +170,22 @@ describe("Paquete y seguros explicados al cliente con datos verificados", () => 
     expect(c.soat?.vence).toBe(v.vencimientoSoat);
     expect(Number.isInteger(c.soat?.dias)).toBe(true);
     expect(c.polizaVence).toBe(v.vencimientoPoliza);
+  });
+});
+
+describe("QA en vivo · el planner agota sus pasos sin respuesta final", () => {
+  it("si promete un asesor, abre el caso de verdad (no_resuelto) y pasa a HANDOFF", async () => {
+    const enBucle: Planner = {
+      mode: "llm",
+      next: async () => ({
+        step: { kind: "tool_calls", rationale: "bucle", calls: [{ id: "c", tool: "consultar_contexto_vehiculo", args: { vehicleId: "veh-01" } }] },
+      }),
+    };
+    const [inicio] = await conversar("feliz", [INICIO]);
+    const agente = createAgent({ ports: createMockPorts(fixtures), planner: enBucle, now: DEMO_NOW, secret: SECRET });
+    const t = await agente.runTurn({ sessionId: "coh-feliz", scenarioId: "feliz", tipo: "mensaje", message: "hola", stateToken: inicio.stateToken });
+    expect(t.reply.text).toMatch(/asesor/i);
+    expect(t.handoff?.motivo).toBe("no_resuelto");
+    expect(t.state).toBe("HANDOFF");
   });
 });

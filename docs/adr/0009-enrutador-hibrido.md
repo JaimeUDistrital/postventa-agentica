@@ -19,6 +19,8 @@ El motor de reglas resuelve bien esos casos (evals en modo determinista: 32/32 c
   - **IA:** solo lo que el motor de reglas no entiende (`fueraDeReglas`: intención «otro» con la cotización ya hecha). Antes, ahí se respondía con el menú.
 - **Guardarraíles de la ruta IA:**
   - solo herramientas de consulta (`consultar_contexto_vehiculo`): no cotiza, no agenda y no ofrece seguros. El enrutador filtra además cualquier otra herramienta que proponga la IA (evento `ia.herramienta_descartada`) y, si no queda ninguna, responde el motor de reglas;
+  - cada consulta se ofrece una sola vez por turno: en vivo, Gemini repetía `consultar_contexto_vehiculo` hasta agotar las iteraciones y nunca respondía. Tras la primera consulta solo le queda «responder». Si Gemini falla, la respuesta del respaldo (motor de reglas) se respeta tal cual;
+  - si aun así se agotan las iteraciones, el orquestador abre de verdad el caso `no_resuelto` que su mensaje promete;
   - responde en texto, sin tarjetas y sin mover el estado;
   - solo puede pasar a un humano por `sintoma_critico` o `cliente_molesto`. Si propone otro motivo, se descarta (evento `ia.pase_descartado`) y responde el motor de reglas. `no_resuelto` sigue la regla del ADR 0008 (2 mensajes seguidos sin entender).
 - Cada turno deja en la traza el evento `planner.ruta`, con la ruta y el motivo. La Auditoría lo usa para mostrar «Reglas» o «Gemini».

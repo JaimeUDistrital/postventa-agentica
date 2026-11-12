@@ -69,7 +69,7 @@ const eventoHerramienta = (tool: ToolName) =>
     name: "ia.herramienta_descartada",
     system: "Guardián",
     status: "blocked",
-    detalle: `La IA propuso «${tool}», que en su ruta no tiene permitida: se descarta.`,
+    detalle: `La IA propuso «${tool}», que en su ruta no tiene permitida o ya usó en este turno: se descarta.`,
     payload: { tool },
   });
 
@@ -87,11 +87,16 @@ export function createPlannerHibrido(ia: Planner, reglas: Planner = plannerDeter
       const traza = input.iteration === 0 ? [eventoRuta(ruta)] : [];
       if (ruta.ruta === "reglas") return conTraza(await reglas.next(input), traza);
 
-      const r = await ia.next({ ...input, allowedTools: input.allowedTools.filter((t) => TOOLS_IA.includes(t)) });
+      // Cada consulta, una vez por turno: en vivo Gemini repetía la misma hasta agotar las iteraciones.
+      const usadas = new Set(input.toolResults.map((t) => t.tool));
+      const permitidas = input.allowedTools.filter((t) => TOOLS_IA.includes(t) && !usadas.has(t));
+      const r = await ia.next({ ...input, allowedTools: permitidas });
+      // Si la IA falló, ya respondió el motor de reglas (respaldo): su respuesta se respeta tal cual.
+      if (r.fallback) return conTraza(r, traza);
       if (r.step.kind === "tool_calls") {
         // Defensa propia: no depende de que el planner de IA respete la lista reducida.
-        const calls = r.step.calls.filter((c) => TOOLS_IA.includes(c.tool));
-        const descartes = r.step.calls.filter((c) => !TOOLS_IA.includes(c.tool)).map((c) => eventoHerramienta(c.tool));
+        const calls = r.step.calls.filter((c) => permitidas.includes(c.tool));
+        const descartes = r.step.calls.filter((c) => !permitidas.includes(c.tool)).map((c) => eventoHerramienta(c.tool));
         if (calls.length) return conTraza({ ...r, step: { ...r.step, calls } }, [...traza, ...descartes]);
         return conTraza(await reglas.next(input), [...traza, ...(r.trace ?? []), ...descartes]);
       }
