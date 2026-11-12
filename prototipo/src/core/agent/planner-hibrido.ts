@@ -23,6 +23,17 @@ const TOOLS_IA: readonly ToolName[] = ["consultar_contexto_vehiculo"];
  * no_resuelto lo decide el motor de reglas (2 mensajes seguidos sin entender, ADR 0008).
  */
 const PASES_IA: readonly HandoffReason[] = ["sintoma_critico", "cliente_molesto"];
+/**
+ * QA en vivo: Gemini rellenó el «handoff» opcional ante un «hola». Un pase de la IA solo vale si el
+ * mensaje del cliente lo respalda (describe una falla o una queja); si no, se descarta.
+ */
+const RESPALDO: Partial<Record<HandoffReason, RegExp>> = {
+  sintoma_critico:
+    /(ruido|suena|sonido|chirr|rechin|golpe|traquete|vibra|tiembla|jalon|humo|olor|huele|fuga|gotea|goteo|testigo|\bluz|luces|bombillo|tablero|fren|calient|temperatura|apag|no prende|no arranca|no enciende|direccion|volante|llanta|pinch|accidente|choc|falla|dano|danad|averi|grua|peligr|riesgo|seguridad)/,
+  cliente_molesto:
+    /(molest|enoj|furios|queja|reclam|pesim|terrible|horrible|hart[oa]|cansad|indign|inaceptable|mal servicio|mala atencion|decepcion|nadie (?:me )?(?:responde|contesta)|esperando|!{2,})/,
+};
+const respaldado = (motivo: HandoffReason, mensaje: string): boolean => RESPALDO[motivo]?.test(normalizar(mensaje)) ?? false;
 
 export function elegirRuta(input: PlannerInput): Ruta {
   const { request, session } = input;
@@ -52,14 +63,14 @@ const eventoRuta = (r: Ruta) =>
     payload: { ruta: r.ruta, motivo: r.motivo },
   });
 
-const eventoDescarte = (motivo: HandoffReason) =>
+const eventoDescarte = (motivo: HandoffReason, causa = "que no le corresponde") =>
   evento({
     kind: "policy",
     agent: "Guardián",
     name: "ia.pase_descartado",
     system: "Guardián",
     status: "blocked",
-    detalle: `La IA propuso pasar a un asesor por «${motivo}», que no le corresponde: responde el motor de reglas.`,
+    detalle: `La IA propuso pasar a un asesor por «${motivo}», ${causa}: responde el motor de reglas.`,
     payload: { motivo },
   });
 
@@ -131,6 +142,10 @@ export function createPlannerHibrido(ia: Planner, reglas: Planner = plannerDeter
       if (handoff && !PASES_IA.includes(handoff.motivo)) {
         const deReglas = await reglas.next(input);
         return conTraza(deReglas, [...traza, ...(r.trace ?? []), eventoDescarte(handoff.motivo)]);
+      }
+      if (handoff && !respaldado(handoff.motivo, input.maskedMessage)) {
+        const deReglas = await reglas.next(input);
+        return conTraza(deReglas, [...traza, ...(r.trace ?? []), eventoDescarte(handoff.motivo, "sin respaldo en el mensaje del cliente")]);
       }
       // Duraciones y precios solo salen de herramientas verificadas: si la IA los afirma, no se envían.
       const inventado = !handoff && DATO_NO_VERIFICADO.test(normalizar(r.step.text));

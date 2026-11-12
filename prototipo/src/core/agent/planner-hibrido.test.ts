@@ -143,12 +143,26 @@ describe("createPlannerHibrido", () => {
     },
   );
 
+  it.each<[HandoffReason, string]>([
+    ["sintoma_critico", "Desde ayer el carro tiembla y suena raro al acelerar"],
+    ["cliente_molesto", "Llevo una semana esperando, pésimo servicio"],
+  ])("ruta IA: puede pasar a humano por «%s» si el mensaje del cliente lo respalda", async (motivo, message) => {
+    const handoff = { motivo, prioridad: "alta" as const, resumen: "La IA pide un asesor" };
+    const input = entrada({ message });
+    expect(elegirRuta(input).ruta).toBe("ia");
+    const r = await createPlannerHibrido(iaFalsa(responder({ handoff })).planner).next(input);
+    expect(r.step).toMatchObject({ kind: "final", handoff });
+  });
+
+  // QA en vivo (Gemini): ante «hola» rellenó el handoff opcional con «sintoma_critico».
   it.each<HandoffReason>(["sintoma_critico", "cliente_molesto"])(
-    "ruta IA: puede pasar a humano por «%s»",
+    "ruta IA: un pase por «%s» ante un saludo no tiene respaldo; se descarta y responden las reglas",
     async (motivo) => {
-      const handoff = { motivo, prioridad: "alta" as const, resumen: "La IA pide un asesor" };
-      const r = await createPlannerHibrido(iaFalsa(responder({ handoff })).planner).next(entrada({ message: "hola" }));
-      expect(r.step).toMatchObject({ kind: "final", handoff });
+      const ia = iaFalsa(responder({ text: "¡Hola! Qué gusto saludarle.", handoff: { motivo, prioridad: "alta", resumen: "x" } }));
+      const r = await createPlannerHibrido(ia.planner).next(entrada({ message: "hola" }));
+      const final = r.step as Extract<PlannerStep, { kind: "final" }>;
+      expect(final.handoff).toBeUndefined();
+      expect(r.trace?.some((e) => e.name === "ia.pase_descartado" && e.status === "blocked")).toBe(true);
     },
   );
 

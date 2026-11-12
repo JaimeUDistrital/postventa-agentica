@@ -23,9 +23,11 @@ El motor de reglas resuelve bien esos casos (evals en modo determinista: 32/32 c
   - si aun así se agotan las iteraciones, el orquestador abre de verdad el caso `no_resuelto` que su mensaje promete;
   - responde en texto, sin tarjetas y sin mover el estado;
   - solo puede pasar a un humano por `sintoma_critico` o `cliente_molesto`. Si propone otro motivo, se descarta (evento `ia.pase_descartado`) y responde el motor de reglas. `no_resuelto` sigue la regla del ADR 0008 (2 mensajes seguidos sin entender).
+  - ese pase solo vale si el mensaje del cliente lo respalda (palabras de falla o de queja). En vivo, Gemini marcó `sintoma_critico` ante un «hola»; sin respaldo se descarta igual (`ia.pase_descartado`);
+  - no envía duraciones ni precios en texto libre: «qué incluye» y «cuánto dura» salen del tarifario por reglas, y si la IA escribe «cuatro horas» o «200 mil pesos», el Guardián lo reemplaza por un texto seguro (evento `ia.dato_no_verificado`). Falla hacia lo seguro: una cifra legítima del contexto también se reemplaza;
 - Cada turno deja en la traza el evento `planner.ruta`, con la ruta y el motivo. La Auditoría lo usa para mostrar «Reglas» o «Gemini».
 - Si Gemini falla, responde el motor de reglas y la interfaz lo indica (ADR 0002 y 0007).
-- El prompt (`postventa-v1.0`) no cambia.
+- Prompt `postventa-v1.2`: no afirmar datos fuera de herramientas, responder solo el último mensaje e incluir «handoff» solo ante un síntoma o una queja. Se mide con el QA en vivo, porque los evals no pasan por la ruta IA.
 
 ## Alternativas consideradas
 - **Solo Gemini con un prompt más estricto:** depende de que el modelo obedezca, y los fallos vistos eran decisiones estructuradas que un prompt no garantiza.
