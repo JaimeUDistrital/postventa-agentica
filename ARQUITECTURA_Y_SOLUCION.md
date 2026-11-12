@@ -119,7 +119,7 @@ flowchart TD
     subgraph Nucleo ["Núcleo (sin Next ni React)"]
         GIN["Guardián de entrada (determinista)"]
         ORQ["Orquestador de turno y estados"]
-        PLN{"Planner"}
+        PLN{"Enrutador híbrido (ADR 0009)"}
         PDET["Planner determinista"]
         PLLM["Planner Gemini con function calling"]
         GOUT["Guardián de salida (determinista)"]
@@ -152,8 +152,8 @@ flowchart TD
     OWN --> API
     API --> GIN --> ORQ --> PLN
     PRO -->|"disparo por km con opt-in"| ORQ
-    PLN -->|"con GEMINI_API_KEY"| PLLM
-    PLN -->|"sin llave o si el LLM falla"| PDET
+    PLN -->|"preguntas abiertas (con GEMINI_API_KEY)"| PLLM
+    PLN -->|"botones, intenciones conocidas, casos con asesor · sin llave o si el LLM falla"| PDET
     PLLM -->|"pide herramientas"| ORQ
     PDET -->|"pide herramientas"| ORQ
     ORQ --> T1 & T2 & T3 & T4 & T5
@@ -176,6 +176,7 @@ flowchart TD
 
 - **El planner nunca escribe precios ni reservas.** Devuelve qué tarjetas mostrar (`showCards`); el orquestador las arma con resultados de herramientas verificados.
 - **Planner con respaldo.** Si no hay `GEMINI_API_KEY`, o Gemini falla (timeout, respuesta inválida), responde el planner determinista con el mismo contrato (`Planner`: `mode` = `deterministic` o `llm`). La demo no se cae.
+- **Enrutador híbrido (ADR 0009).** Con la IA activa, el motor de reglas resuelve lo exacto (aviso inicial, botones, agendar, seguros, casos con un asesor, cita cerrada) y Gemini solo responde lo que las reglas no entienden. En esa ruta, Gemini solo consulta datos (una vez por turno), responde en texto sin tarjetas ni cambio de estado y solo puede pasar a un humano por síntoma crítico o cliente molesto. Cada turno deja en la traza qué motor respondió (`planner.ruta`).
 - **Estados de la conversación:** `TRIGGER → CONTACTO → COTIZACION → VENTA_CRUZADA → CONFIRMACION → CERRADO`, con salidas `HANDOFF` y `BLOQUEADO`.
 - **Trazas:** cada paso emite un `TraceEvent` (tipos `guardrail`, `tool_call`, `tool_result`, `policy`, `llm`, `handoff`, `state`, `memory`) con sistema, nivel de autonomía, latencia, estado y payload con PII enmascarada.
 - **Memoria visible** por agente (`proactivo`, `postventa`, `guardian`, `copiloto`) en el panel «Memoria».
@@ -367,8 +368,8 @@ flowchart LR
 
     Vars --> APPV
     USR["Navegador del jurado"] -->|"HTTPS"| APPV
-    APPV -->|"con llave"| GEM["API de Gemini"]
-    APPV -->|"sin llave o si falla"| DET["Planner determinista"]
+    APPV -->|"con llave: preguntas abiertas"| GEM["API de Gemini"]
+    APPV -->|"lo exacto · sin llave o si falla"| DET["Planner determinista"]
     APPV <-->|"stateToken firmado HMAC"| USR
 ```
 

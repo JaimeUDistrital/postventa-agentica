@@ -2,13 +2,13 @@
 
 ## Cómo se usó
 
-- **Claude Code como orquestador**: dividió el trabajo en tareas (T00–T18, ver `PLAN.md` y `logs/tareas/`) y delegó cada una a sub-agentes con modelo según la dificultad (alto: arquitectura, Guardián, orquestador; medio: herramientas, UI, evals, modelo financiero; bajo: datos mock y documentación). Cada sub-agente dejó su informe en `logs/tareas/`.
-- **Gemini como planner del producto**: en la demo, solo con código del jurado válido, Gemini decide la siguiente herramienta. El Guardián determinista valida entradas y salidas y el LLM no puede anularlo. Sin Gemini, un planner determinista da el mismo recorrido.
+- **Claude Code como orquestador**: dividió el trabajo en tareas (T00–T22, ver `PLAN.md` y `logs/tareas/`) y delegó cada una a sub-agentes con modelo según la dificultad (alto: arquitectura, Guardián, orquestador; medio: herramientas, UI, evals, modelo financiero; bajo: datos mock y documentación). Cada sub-agente dejó su informe en `logs/tareas/`.
+- **Gemini en el producto**: en la demo atiende a todos los visitantes, con topes (ADR 0007), mediante un enrutador híbrido (ADR 0009). El motor de reglas resuelve lo exacto (botones, agendar, seguros, casos con un asesor) y Gemini responde las preguntas abiertas, solo con herramientas de consulta. El Guardián determinista valida entradas y salidas y el LLM no puede anularlo. Sin Gemini, el motor de reglas da el mismo recorrido.
 
 ## Qué verificó el humano
 
 - Decisiones de alcance, supuestos clave del caso de negocio y el rumbo de cada ola.
-- Creación y control de claves (Gemini sin facturación, secretos en su terminal) y la publicación.
+- Creación y control de claves (Gemini con límites de gasto, secretos en su terminal) y la publicación.
 - Revisión de la salida de los sub-agentes en los puntos de control del plan.
 
 ## Qué se verificó con pruebas
