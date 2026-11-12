@@ -27,7 +27,7 @@ El motor de reglas resuelve bien esos casos (evals en modo determinista: 32/32 c
   - no envía duraciones ni precios en texto libre: «qué incluye» y «cuánto dura» salen del tarifario por reglas, y si la IA escribe «cuatro horas» o «200 mil pesos», el Guardián lo reemplaza por un texto seguro (evento `ia.dato_no_verificado`). Falla hacia lo seguro: una cifra legítima del contexto también se reemplaza;
 - Cada turno deja en la traza el evento `planner.ruta`, con la ruta y el motivo. La Auditoría lo usa para mostrar «Reglas» o «Gemini».
 - Si Gemini falla, responde el motor de reglas y la interfaz lo indica (ADR 0002 y 0007).
-- Prompt `postventa-v1.2`: no afirmar datos fuera de herramientas, responder solo el último mensaje e incluir «handoff» solo ante un síntoma o una queja. Se mide con el QA en vivo, porque los evals no pasan por la ruta IA.
+- Prompt `postventa-v1.3`: no afirmar datos fuera de herramientas, responder solo el último mensaje, incluir «handoff» solo ante un síntoma o una queja y, sin herramienta de cotización, no prometer tarjetas (la ruta IA no las muestra). Se mide con el QA en vivo, porque los evals no pasan por la ruta IA.
 
 ## Alternativas consideradas
 - **Solo Gemini con un prompt más estricto:** depende de que el modelo obedezca, y los fallos vistos eran decisiones estructuradas que un prompt no garantiza.
